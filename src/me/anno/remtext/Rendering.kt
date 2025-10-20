@@ -1,5 +1,6 @@
 package me.anno.remtext
 
+import me.anno.remtext.Controls.inputMode
 import me.anno.remtext.Controls.mouseX
 import me.anno.remtext.Controls.mouseY
 import me.anno.remtext.Controls.scrollX
@@ -109,8 +110,8 @@ object Rendering {
             dx = 2f / width
             dy = 2f / height
 
-            val showCursor = cursor0 == cursor1 &&
-                    ((System.nanoTime() - blink0) / 500_000_000L).and(1) == 0L
+            val showCursor0 = ((System.nanoTime() - blink0) / 500_000_000L).and(1) == 0L
+            val showCursor = cursor0 == cursor1 && showCursor0
 
             flatShader.use()
             color4(flatShader.color, textColor, 1f)
@@ -143,7 +144,7 @@ object Rendering {
             var selectionStartX = lineNumberOffset
             var selectionStartY = 0L
 
-            fun drawCursor(x0: Int) {
+            fun drawCursor(x0: Int, y: Int) {
                 flatShader.use()
                 color4(flatShader.color, middle, 1f)
                 drawQuad(flatShader.bounds, x0, y, 1, lineHeight)
@@ -193,7 +194,7 @@ object Rendering {
                     lineIndex == cursor0.lineIndex &&
                     i == cursor1.i
                 ) {
-                    drawCursor(x)
+                    drawCursor(x, y.toInt())
                 }
             }
 
@@ -238,9 +239,9 @@ object Rendering {
                             }
                         }
 
-                        if (showCursor && y < height && lineIndex == cursor0.lineIndex && cursor0.i >= line.i1) {
+                        if (showCursor && y + lineHeight >= 0 && y < height && lineIndex == cursor0.lineIndex && cursor0.i >= line.i1) {
                             val x = line.getOffset(line.i1) + lineNumberOffset - dxi
-                            drawCursor(x)
+                            drawCursor(x, y.toInt())
                         }
 
                     } else {
@@ -254,10 +255,7 @@ object Rendering {
                     val dxi = lineNumberOffset - scrollX.toInt()
                     lineStarts.add(LineStart(line.i0, lineIndex, dxi, y.toInt()))
 
-                    // binary search for start,
-                    // todo test performance of this case with a really long single-line JSON file
-                    // todo wrap-lines is probably really slow for this case :(
-
+                    // find the first character to be rendered
                     var i0 = binarySearch(0, line.i1 - line.i0) { idx ->
                         line.getOffset(idx + line.i0) + dxi
                     }
@@ -281,9 +279,9 @@ object Rendering {
                         }
                     }
 
-                    if (showCursor && lineIndex == cursor0.lineIndex && cursor0.i >= line.i1) {
+                    if (showCursor && y + lineHeight >= 0 && y < height && lineIndex == cursor0.lineIndex && cursor0.i >= line.i1) {
                         val x = line.getOffset(line.i1) + lineNumberOffset
-                        drawCursor(x)
+                        drawCursor(x, y.toInt())
                     }
                 }
 
@@ -300,6 +298,60 @@ object Rendering {
                 y += lineHeight
                 numLines++
                 if (y >= height) break@lines
+            }
+
+            // show the current search & replacement term
+            // todo show the number of search results
+
+            fun drawText(text: String, x: Int, y: Int, textColor: Color, cursor: Int) {
+                texShader.use()
+                color3(texShader.textColor, textColor)
+                color3(texShader.bgColor, bgColor)
+                var x = x
+                for (i in text.indices) {
+                    val char = text[i]
+                    val nextChar = if (i + 1 < text.length) text[i + 1] else ' '
+                    val offset = Font.getOffset(char, nextChar)
+                    if (char != ' ') {
+                        val tex = Font.getTexture(char)
+                        glBindTexture(GL_TEXTURE_2D, tex.pointer)
+                        drawQuad(texShader.bounds, x, y, tex.width, tex.height)
+                    }
+                    if (showCursor0 && i == cursor) {
+                        drawCursor(x, y)
+                    }
+                    x += offset
+                }
+
+                if (showCursor0 && text.length == cursor) {
+                    drawCursor(x, y)
+                }
+            }
+
+            if (inputMode != Controls.InputMode.TEXT) {
+                flatShader.use()
+                color4(flatShader.color, bgColor, 1f)
+                drawQuad(flatShader.bounds, 0, 0, width, lineHeight)
+
+                val searched = Controls.searched.text
+                if (searched.isNotEmpty()) {
+                    drawText(searched, 0, 0, textColor, Controls.searched.cursor)
+                } else drawText("Search: ", 0, 0, middle, 8)
+
+                color4(flatShader.color, middle, 1f)
+                drawQuad(flatShader.bounds, 0, lineHeight, width, 1)
+                if (inputMode != Controls.InputMode.SEARCH_ONLY) {
+                    color4(flatShader.color, bgColor, 1f)
+                    drawQuad(flatShader.bounds, 0, lineHeight + 1, width, lineHeight - 1)
+
+                    val replaced = Controls.replaced.text
+                    if (replaced.isNotEmpty()) {
+                        drawText(replaced, 0, lineHeight, textColor, Controls.replaced.cursor)
+                    } else drawText("Replace: ", 0, lineHeight, middle, 9)
+
+                    color4(flatShader.color, middle, 1f)
+                    drawQuad(flatShader.bounds, 0, lineHeight * 2, width, 1)
+                }
             }
 
             lastNumLines = numLines

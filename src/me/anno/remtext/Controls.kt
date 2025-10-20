@@ -78,7 +78,7 @@ object Controls {
                     else -> inputMode = InputMode.TEXT
                 }
                 GLFW_KEY_A -> {
-                    if (pressed && isControlDown) {
+                    if (pressed && isControlDown && inputMode == InputMode.TEXT) {
                         cursor0 = Cursor(0, 0)
                         val lines = file.lines
                         val lastLine = lines.lastIndex
@@ -86,7 +86,7 @@ object Controls {
                     }
                 }
                 GLFW_KEY_C -> {
-                    if (pressed && isControlDown) {
+                    if (pressed && isControlDown && inputMode == InputMode.TEXT) {
                         val joined = getSelectedString()
                         if (joined.isNotEmpty()) {
                             copyContents(joined)
@@ -94,7 +94,7 @@ object Controls {
                     }
                 }
                 GLFW_KEY_X -> {
-                    if (pressed && isControlDown) {
+                    if (pressed && isControlDown && inputMode == InputMode.TEXT) {
                         val joined = getSelectedString()
                         if (joined.isNotEmpty()) {
                             copyContents(joined)
@@ -106,7 +106,11 @@ object Controls {
                     if (pressed && isControlDown && file.finished) {
                         val clipboard = Toolkit.getDefaultToolkit().systemClipboard
                         val toPaste = clipboard.getData(DataFlavor.stringFlavor).toString()
-                        highLevelPaste(toPaste)
+                        when (inputMode) {
+                            InputMode.TEXT -> highLevelPaste(toPaste)
+                            InputMode.SEARCH, InputMode.SEARCH_ONLY -> searched.paste(toPaste)
+                            InputMode.REPLACE -> replaced.paste(toPaste)
+                        }
                     }
                 }
                 GLFW_KEY_S -> {
@@ -154,17 +158,25 @@ object Controls {
                         else file.history.undo()
                     }
                 }
-                GLFW_KEY_BACKSPACE -> {
-                    if (cursor0 == cursor1) {
-                        cursor0 = cursorLeft(cursor0)
+                GLFW_KEY_BACKSPACE -> when (inputMode) {
+                    InputMode.TEXT -> {
+                        if (cursor0 == cursor1) {
+                            cursor0 = cursorLeft(cursor0)
+                        }
+                        highLevelDeleteSelection()
                     }
-                    highLevelDeleteSelection()
+                    InputMode.SEARCH, InputMode.SEARCH_ONLY -> searched.backspace()
+                    InputMode.REPLACE -> replaced.backspace()
                 }
-                GLFW_KEY_DELETE -> {
-                    if (cursor0 == cursor1) {
-                        cursor0 = cursorRight(cursor0)
+                GLFW_KEY_DELETE -> when (inputMode) {
+                    InputMode.TEXT -> {
+                        if (cursor0 == cursor1) {
+                            cursor0 = cursorRight(cursor0)
+                        }
+                        highLevelDeleteSelection()
                     }
-                    highLevelDeleteSelection()
+                    InputMode.SEARCH, InputMode.SEARCH_ONLY -> searched.delete()
+                    InputMode.REPLACE -> replaced.delete()
                 }
                 GLFW_KEY_ENTER -> when (inputMode) {
                     InputMode.SEARCH_ONLY -> {
@@ -317,12 +329,24 @@ object Controls {
     }
 
     class TextBox {
+
         var text = ""
         var cursor = 0
 
         fun paste(str: String) {
             text = text.substring(0, cursor) + str + text.substring(cursor)
             cursor += str.length
+        }
+
+        fun backspace() {
+            if (cursor <= 0) return
+            text = text.substring(0, cursor - 1) + text.substring(cursor)
+            cursor--
+        }
+
+        fun delete() {
+            if (cursor >= text.length) return
+            text = text.substring(0, cursor) + text.substring(cursor + 1)
         }
 
         fun cursorLeft() {
