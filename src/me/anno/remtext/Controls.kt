@@ -24,7 +24,8 @@ import me.anno.remtext.editing.Editing.getSelectedString
 import me.anno.remtext.editing.Editing.highLevelDeleteSelection
 import me.anno.remtext.editing.Editing.highLevelPaste
 import me.anno.remtext.editing.Editing.sameX
-import me.anno.remtext.font.Font
+import me.anno.remtext.editing.InputMode
+import me.anno.remtext.editing.TextBox
 import me.anno.remtext.font.Font.lineHeight
 import me.anno.remtext.font.Line
 import org.lwjgl.glfw.GLFW.*
@@ -33,7 +34,6 @@ import java.awt.datatransfer.DataFlavor
 import java.awt.datatransfer.StringSelection
 import kotlin.concurrent.thread
 import kotlin.math.max
-import kotlin.math.min
 import kotlin.math.sqrt
 
 object Controls {
@@ -80,27 +80,49 @@ object Controls {
                     else -> inputMode = InputMode.TEXT
                 }
                 GLFW_KEY_A -> {
-                    if (pressed && isControlDown && inputMode == InputMode.TEXT) {
-                        cursor0 = Cursor(0, 0)
-                        val lines = file.lines
-                        val lastLine = lines.lastIndex
-                        cursor1 = Cursor(lastLine, lines[lastLine].i1)
+                    if (pressed && isControlDown) {
+                        when (inputMode) {
+                            InputMode.TEXT -> {
+                                cursor0 = Cursor(0, 0)
+                                val lines = file.lines
+                                val lastLine = lines.lastIndex
+                                cursor1 = Cursor(lastLine, lines[lastLine].i1)
+                            }
+                            InputMode.SEARCH, InputMode.SEARCH_ONLY -> searched.selectAll()
+                            InputMode.REPLACE -> replaced.selectAll()
+                        }
+
                     }
                 }
                 GLFW_KEY_C -> {
-                    if (pressed && isControlDown && inputMode == InputMode.TEXT) {
-                        val joined = getSelectedString()
+                    if (pressed && isControlDown) {
+                        val joined = when (inputMode) {
+                            InputMode.TEXT -> getSelectedString()
+                            InputMode.SEARCH, InputMode.SEARCH_ONLY -> searched.getSelectedString()
+                            InputMode.REPLACE -> replaced.getSelectedString()
+                        }
                         if (joined.isNotEmpty()) {
                             copyContents(joined)
                         }
                     }
                 }
                 GLFW_KEY_X -> {
-                    if (pressed && isControlDown && inputMode == InputMode.TEXT) {
-                        val joined = getSelectedString()
+                    if (pressed && isControlDown) {
+                        val joined = when (inputMode) {
+                            InputMode.TEXT -> getSelectedString()
+                            InputMode.SEARCH, InputMode.SEARCH_ONLY -> searched.getSelectedString()
+                            InputMode.REPLACE -> replaced.getSelectedString()
+                        }
                         if (joined.isNotEmpty()) {
                             copyContents(joined)
-                            highLevelDeleteSelection()
+                            when (inputMode) {
+                                InputMode.TEXT -> highLevelDeleteSelection()
+                                InputMode.SEARCH, InputMode.SEARCH_ONLY -> {
+                                    searched.paste("")
+                                    updateSearchResults()
+                                }
+                                InputMode.REPLACE -> replaced.paste("")
+                            }
                         }
                     }
                 }
@@ -110,7 +132,10 @@ object Controls {
                         val toPaste = clipboard.getData(DataFlavor.stringFlavor).toString()
                         when (inputMode) {
                             InputMode.TEXT -> highLevelPaste(toPaste)
-                            InputMode.SEARCH, InputMode.SEARCH_ONLY -> searched.paste(toPaste)
+                            InputMode.SEARCH, InputMode.SEARCH_ONLY -> {
+                                searched.paste(toPaste)
+                                updateSearchResults()
+                            }
                             InputMode.REPLACE -> replaced.paste(toPaste)
                         }
                     }
@@ -168,7 +193,10 @@ object Controls {
                         }
                         highLevelDeleteSelection()
                     }
-                    InputMode.SEARCH, InputMode.SEARCH_ONLY -> searched.backspace()
+                    InputMode.SEARCH, InputMode.SEARCH_ONLY -> {
+                        searched.backspace()
+                        updateSearchResults()
+                    }
                     InputMode.REPLACE -> replaced.backspace()
                 }
                 GLFW_KEY_DELETE -> when (inputMode) {
@@ -178,7 +206,10 @@ object Controls {
                         }
                         highLevelDeleteSelection()
                     }
-                    InputMode.SEARCH, InputMode.SEARCH_ONLY -> searched.delete()
+                    InputMode.SEARCH, InputMode.SEARCH_ONLY -> {
+                        searched.delete()
+                        updateSearchResults()
+                    }
                     InputMode.REPLACE -> replaced.delete()
                 }
                 GLFW_KEY_ENTER -> when (inputMode) {
@@ -302,6 +333,7 @@ object Controls {
                         if (lineIndex < numHiddenLines) {
                             val element = if (lineIndex == 0) searched else replaced
                             element.setCursorByX(mouseX)
+                            element.cursor0 = element.cursor1
                             if (inputMode != InputMode.SEARCH_ONLY) {
                                 inputMode = if (lineIndex == 0) InputMode.SEARCH else InputMode.REPLACE
                             }
@@ -344,61 +376,6 @@ object Controls {
 
     var movedSinceLeftPress = 0f
     var downTime = 0L
-
-    enum class InputMode {
-        SEARCH_ONLY,
-        SEARCH,
-        REPLACE,
-        TEXT
-    }
-
-    class TextBox {
-
-        // todo add second cursor to allow for control+a and such
-        var text = ""
-        var cursor = 0
-
-        fun paste(str: String) {
-            text = text.substring(0, cursor) + str + text.substring(cursor)
-            cursor += str.length
-        }
-
-        fun backspace() {
-            if (cursor <= 0) return
-            text = text.substring(0, cursor - 1) + text.substring(cursor)
-            cursor--
-        }
-
-        fun delete() {
-            if (cursor >= text.length) return
-            text = text.substring(0, cursor) + text.substring(cursor + 1)
-        }
-
-        fun cursorLeft() {
-            cursor = max(cursor - 1, 0)
-        }
-
-        fun cursorRight() {
-            cursor = min(cursor + 1, text.length)
-        }
-
-        fun setCursorByX(mouseX: Int) {
-            var x = 0
-            val text = text
-            for (i in text.indices) {
-                val char = text[i]
-                val nextChar = if (i + 1 < text.length) text[i + 1] else ' '
-                val offset = Font.getOffset(char, nextChar)
-                if (x + offset.shr(1) > mouseX) {
-                    // found it :)
-                    cursor = i
-                    return
-                }
-                x += offset
-            }
-            cursor = text.length
-        }
-    }
 
     var inputMode = InputMode.TEXT
 
