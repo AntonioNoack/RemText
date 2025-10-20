@@ -24,6 +24,7 @@ import me.anno.remtext.editing.Editing.getSelectedString
 import me.anno.remtext.editing.Editing.highLevelDeleteSelection
 import me.anno.remtext.editing.Editing.highLevelPaste
 import me.anno.remtext.editing.Editing.sameX
+import me.anno.remtext.font.Font
 import me.anno.remtext.font.Font.lineHeight
 import me.anno.remtext.font.Line
 import org.lwjgl.glfw.GLFW.*
@@ -136,6 +137,7 @@ object Controls {
                 }
                 GLFW_KEY_TAB -> {
                     if (pressed) {
+                        blink0 = System.nanoTime()
                         inputMode = when (inputMode) {
                             InputMode.SEARCH -> InputMode.REPLACE
                             InputMode.REPLACE -> InputMode.SEARCH
@@ -269,9 +271,14 @@ object Controls {
                 isDraggingX -> dragX()
                 isDraggingY -> dragY()
                 isLeftDown -> {
-                    cursor1 = getCursorPosition(xi, yi)
                     blink0 = System.nanoTime()
-                    sameX = -1
+                    if (leftDownLine < numHiddenLines) {
+                        val element = if (leftDownLine == 0) searched else replaced
+                        element.setCursorByX(mouseX)
+                    } else {
+                        cursor1 = getCursorPosition(xi, yi)
+                        sameX = -1
+                    }
                 }
             }
         }
@@ -290,9 +297,19 @@ object Controls {
                     isDraggingX -> dragX()
                     isDraggingY -> dragY()
                     isLeftDown -> {
-                        blink0 = System.nanoTime()
-                        cursor0 = getCursorPosition(mouseX, mouseY)
-                        cursor1 = cursor0
+                        val lineIndex = mouseY / lineHeight
+                        leftDownLine = lineIndex
+                        if (lineIndex < numHiddenLines) {
+                            val element = if (lineIndex == 0) searched else replaced
+                            element.setCursorByX(mouseX)
+                            if (inputMode != InputMode.SEARCH_ONLY) {
+                                inputMode = if (lineIndex == 0) InputMode.SEARCH else InputMode.REPLACE
+                            }
+                        } else {
+                            blink0 = System.nanoTime()
+                            cursor0 = getCursorPosition(mouseX, mouseY)
+                            cursor1 = cursor0
+                        }
                     }
                 }
 
@@ -323,6 +340,7 @@ object Controls {
     var isLeftDown = false
     var isDraggingX = false
     var isDraggingY = false
+    var leftDownLine = 0
 
     var movedSinceLeftPress = 0f
     var downTime = 0L
@@ -336,6 +354,7 @@ object Controls {
 
     class TextBox {
 
+        // todo add second cursor to allow for control+a and such
         var text = ""
         var cursor = 0
 
@@ -362,6 +381,23 @@ object Controls {
         fun cursorRight() {
             cursor = min(cursor + 1, text.length)
         }
+
+        fun setCursorByX(mouseX: Int) {
+            var x = 0
+            val text = text
+            for (i in text.indices) {
+                val char = text[i]
+                val nextChar = if (i + 1 < text.length) text[i + 1] else ' '
+                val offset = Font.getOffset(char, nextChar)
+                if (x + offset.shr(1) > mouseX) {
+                    // found it :)
+                    cursor = i
+                    return
+                }
+                x += offset
+            }
+            cursor = text.length
+        }
     }
 
     var inputMode = InputMode.TEXT
@@ -370,6 +406,7 @@ object Controls {
     val replaced = TextBox()
 
     var searchResults: List<Cursor> = emptyList()
+    var shownSearchResult = 0
 
     fun isOnSearchResult(): Cursor? {
         val cursor = cursor0
@@ -378,19 +415,17 @@ object Controls {
 
     fun showNextSearchResult() {
         val cursor = cursor0
-        val nextSearchResult =
-            searchResults.firstOrNull { it > cursor }
-                ?: searchResults.firstOrNull()
-                ?: return
+        val index = max(searchResults.indexOfFirst { it > cursor }, 0)
+        val nextSearchResult = searchResults.getOrNull(index) ?: return
+        shownSearchResult = index
         showSearchResult(nextSearchResult)
     }
 
     fun showPrevSearchResult() {
         val cursor = cursor0
-        val prevSearchResult =
-            searchResults.lastOrNull { it < cursor }
-                ?: searchResults.lastOrNull()
-                ?: return
+        val index = max(searchResults.indexOfLast { it < cursor }, 0)
+        val prevSearchResult = searchResults.getOrNull(index) ?: return
+        shownSearchResult = index
         showSearchResult(prevSearchResult)
     }
 
@@ -403,6 +438,7 @@ object Controls {
 
     fun replaceSearchResult(cursor: Cursor) {
         // todo is this working 100% correctly?? paste might make issues
+        //  recalculating would be the easy, but potentially expensive way
         showSearchResult(cursor)
         highLevelPaste(replaced.text)
         val tmp = ArrayList<Cursor>(searchResults)

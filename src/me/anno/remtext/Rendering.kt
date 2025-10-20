@@ -312,8 +312,6 @@ object Rendering {
                 var x = x
                 for (i in text.indices) {
                     val char = text[i]
-                    val nextChar = if (i + 1 < text.length) text[i + 1] else ' '
-                    val offset = Font.getOffset(char, nextChar)
                     if (char != ' ') {
                         val tex = Font.getTexture(char)
                         glBindTexture(GL_TEXTURE_2D, tex.pointer)
@@ -322,11 +320,29 @@ object Rendering {
                     if (showCursor0 && i == cursor) {
                         drawCursor(x, y)
                     }
-                    x += offset
+                    val nextChar = if (i + 1 < text.length) text[i + 1] else ' '
+                    x += Font.getOffset(char, nextChar)
                 }
 
                 if (showCursor0 && text.length == cursor) {
                     drawCursor(x, y)
+                }
+            }
+
+            fun drawTextRight(text: String, x: Int, y: Int, textColor: Color) {
+                texShader.use()
+                color3(texShader.textColor, textColor)
+                color3(texShader.bgColor, bgColor)
+                var x = x
+                for (i in text.indices.reversed()) {
+                    val char = text[i]
+                    val nextChar = if (i + 1 < text.length) text[i + 1] else ' '
+                    x -= Font.getOffset(char, nextChar)
+                    if (char != ' ') {
+                        val tex = Font.getTexture(char)
+                        glBindTexture(GL_TEXTURE_2D, tex.pointer)
+                        drawQuad(texShader.bounds, x, y, tex.width, tex.height)
+                    }
                 }
             }
 
@@ -342,12 +358,18 @@ object Rendering {
                         searched, 0, 0, textColor,
                         if (searchInput) Controls.searched.cursor else -1
                     )
+
+                    val numResults = Controls.searchResults.size
+                    val index = min(Controls.shownSearchResult + 1, numResults)
+                    drawTextRight("$index/$numResults", width, 0, middle)
                 } else {
                     drawText("Search: ", 0, 0, middle, if (searchInput) 8 else -1)
                 }
 
+                flatShader.use()
                 color4(flatShader.color, middle, 1f)
                 drawQuad(flatShader.bounds, 0, lineHeight, width, 1)
+
                 if (inputMode != Controls.InputMode.SEARCH_ONLY) {
                     color4(flatShader.color, bgColor, 1f)
                     drawQuad(flatShader.bounds, 0, lineHeight + 1, width, lineHeight - 1)
@@ -363,6 +385,7 @@ object Rendering {
                         drawText("Replace: ", 0, lineHeight, middle, if (replaceInput) 9 else -1)
                     }
 
+                    flatShader.use()
                     color4(flatShader.color, middle, 1f)
                     drawQuad(flatShader.bounds, 0, lineHeight * 2, width, 1)
                 }
