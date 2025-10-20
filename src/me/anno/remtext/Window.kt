@@ -49,6 +49,7 @@ object Window {
         val windowY = mouse0.y - height.shr(1)
         glfwSetWindowPos(window, windowX, windowY)
         glfwSetWindowTitle(window, "$WINDOW_TITLE - ${file.file.name}")
+        // todo execute the setIcon() function if on Windows
         if (false) setIcon()
 
         glfwMakeContextCurrent(window)
@@ -59,8 +60,11 @@ object Window {
         gfxCheck()
     }
 
+    /**
+     * For Ubuntu, there must be a .desktop file with name RemText.desktop, and the proper linked icon, and you must re-log,
+     * for Windows, the following code should work:
+     * */
     private fun setIcon() {
-        // todo get this to work... doesn't show up at all on Ubuntu :(
         val icon = ImageIO.read(Window.javaClass.getResourceAsStream("/Icon256.png"))
         val image = GLFWImage.malloc()
         val pixelBytes = ByteBuffer
@@ -70,10 +74,10 @@ object Window {
             for (x in 0 until icon.width) {
                 val rgb = icon.getRGB(x, y)
                 // channels are not tested yet
-                pixelBytes.put((rgb shr 24).toByte())
                 pixelBytes.put((rgb shr 16).toByte())
                 pixelBytes.put((rgb shr 8).toByte())
-                pixelBytes.put((rgb shr 0).toByte())
+                pixelBytes.put((rgb).toByte())
+                pixelBytes.put((rgb shr 24).toByte())
             }
         }
         pixelBytes.flip()
