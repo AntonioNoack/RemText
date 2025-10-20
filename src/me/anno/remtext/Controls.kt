@@ -25,6 +25,7 @@ import me.anno.remtext.editing.Editing.highLevelDeleteSelection
 import me.anno.remtext.editing.Editing.highLevelPaste
 import me.anno.remtext.editing.Editing.sameX
 import me.anno.remtext.font.Font.lineHeight
+import me.anno.remtext.font.Line
 import org.lwjgl.glfw.GLFW.*
 import java.awt.Toolkit
 import java.awt.datatransfer.DataFlavor
@@ -134,7 +135,7 @@ object Controls {
                     }
                 }
                 GLFW_KEY_TAB -> {
-                    if (pressed && isControlDown) {
+                    if (pressed) {
                         inputMode = when (inputMode) {
                             InputMode.SEARCH -> InputMode.REPLACE
                             InputMode.REPLACE -> InputMode.SEARCH
@@ -180,12 +181,17 @@ object Controls {
                 }
                 GLFW_KEY_ENTER -> when (inputMode) {
                     InputMode.SEARCH_ONLY -> {
-                        // todo show next result
+                        if (isShiftDown) showPrevSearchResult()
+                        else showNextSearchResult()
                     }
                     InputMode.SEARCH -> inputMode = InputMode.REPLACE
                     InputMode.REPLACE -> {
-                        // todo if already at next result, replace
-                        // todo else show next result
+                        val cursor = isOnSearchResult()
+                        if (cursor != null) {
+                            replaceSearchResult(cursor)
+                            showNextSearchResult()
+                        } else if (isShiftDown) showPrevSearchResult()
+                        else showNextSearchResult()
                     }
                     InputMode.TEXT -> highLevelPaste("\n")
                 }
@@ -221,7 +227,7 @@ object Controls {
                             scrollY -= lineHeight
                         }
                     } else {
-                        // todo show previous search result
+                        showPrevSearchResult()
                     }
                 }
                 GLFW_KEY_DOWN -> {
@@ -234,7 +240,7 @@ object Controls {
                             scrollY += lineHeight
                         }
                     } else {
-                        // todo show next search result
+                        showNextSearchResult()
                     }
                 }
             }
@@ -365,6 +371,71 @@ object Controls {
 
     var searchResults: List<Cursor> = emptyList()
 
+    fun isOnSearchResult(): Cursor? {
+        val cursor = cursor0
+        return if (cursor in searchResults) cursor else null
+    }
+
+    fun showNextSearchResult() {
+        val cursor = cursor0
+        val nextSearchResult =
+            searchResults.firstOrNull { it > cursor }
+                ?: searchResults.firstOrNull()
+                ?: return
+        showSearchResult(nextSearchResult)
+    }
+
+    fun showPrevSearchResult() {
+        val cursor = cursor0
+        val prevSearchResult =
+            searchResults.lastOrNull { it < cursor }
+                ?: searchResults.lastOrNull()
+                ?: return
+        showSearchResult(prevSearchResult)
+    }
+
+    fun showSearchResult(cursor: Cursor) {
+        // set cursor
+        cursor0 = cursor
+        cursor1 = Cursor(cursor.lineIndex, cursor.i + searched.text.length)
+        scrollTo(cursor)
+    }
+
+    fun replaceSearchResult(cursor: Cursor) {
+        // todo is this working 100% correctly?? paste might make issues
+        showSearchResult(cursor)
+        highLevelPaste(replaced.text)
+        val tmp = ArrayList<Cursor>(searchResults)
+        tmp.removeIf { it.lineIndex == cursor.lineIndex }
+        val line = file.lines[cursor.lineIndex]
+        collectSearchResults(line, cursor.lineIndex, searched.text, tmp)
+        tmp.sort()
+        searchResults = tmp
+    }
+
+    fun scrollTo(cursor: Cursor) {
+        val dstLineIndex = if (file.wrapLines) {
+            val lines = file.lines
+            var numLines = 0
+            val available = Window.availableWidth
+            for (lineIndex in lines.indices) {
+                val line = lines[lineIndex]
+                if (lineIndex < cursor.lineIndex) {
+                    numLines += line.getNumLines(available)
+                } else {
+                    // find the correct sub-index
+                    val subLine = line.subList(line.i0, cursor.i)
+                    numLines += subLine.getNumLines(available) - 1
+                    break
+                }
+            }
+            numLines
+        } else {
+            cursor.lineIndex
+        }
+        scrollY = dstLineIndex * lineHeight.toLong()
+    }
+
     fun updateSearchResults() {
         val searched = searched.text
         if (searched.isEmpty()) {
@@ -380,19 +451,33 @@ object Controls {
 
         thread(name = "Search") {
             for (lineIndex in lines.indices) {
-                val line = lines[lineIndex]
                 if (searched != Controls.searched.text) break
 
-                var i0 = line.i0
-                while (true) {
-                    val i1 = line.text.indexOf(searched, i0)
-                    if (i1 < i0 || i1 >= line.i1) break
-
-                    results.add(Cursor(lineIndex, i1))
-                    i0 = i1 + searched.length
-                }
+                val line = lines[lineIndex]
+                collectSearchResults(line, lineIndex, searched, results)
             }
         }
     }
+
+    fun collectSearchResults(
+        line: Line, lineIndex: Int, searched: String,
+        results: ArrayList<Cursor>
+    ) {
+        var i0 = line.i0
+        while (true) {
+            val i1 = line.text.indexOf(searched, i0, true)
+            if (i1 < i0 || i1 >= line.i1) break
+
+            results.add(Cursor(lineIndex, i1))
+            i0 = i1 + searched.length
+        }
+    }
+
+    val numHiddenLines: Int
+        get() = when (inputMode) {
+            InputMode.TEXT -> 0
+            InputMode.SEARCH_ONLY -> 1
+            InputMode.SEARCH, InputMode.REPLACE -> 2
+        }
 
 }

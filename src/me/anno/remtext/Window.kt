@@ -19,6 +19,7 @@ object Window {
     var window = 0L
     var windowWidth = 0
     var windowHeight = 0
+    var availableWidth = 0
 
     fun createWindow() {
         // Initialize GLFW

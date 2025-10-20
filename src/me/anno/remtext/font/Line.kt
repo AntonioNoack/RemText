@@ -79,6 +79,8 @@ class Line(
     var countedLinesAtW = 0
     var countedLinesW = 0
 
+    fun subList(i0: Int, i1: Int) = Line(text, i0, i1, offsets)
+
     fun getNumLines(width: Int): Int {
         if (countedLinesW == width) {
             return countedLinesAtW

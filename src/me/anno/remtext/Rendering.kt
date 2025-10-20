@@ -3,6 +3,7 @@ package me.anno.remtext
 import me.anno.remtext.Controls.inputMode
 import me.anno.remtext.Controls.mouseX
 import me.anno.remtext.Controls.mouseY
+import me.anno.remtext.Controls.numHiddenLines
 import me.anno.remtext.Controls.scrollX
 import me.anno.remtext.Controls.scrollY
 import me.anno.remtext.Window.isDarkTheme
@@ -111,7 +112,7 @@ object Rendering {
             dy = 2f / height
 
             val showCursor0 = ((System.nanoTime() - blink0) / 500_000_000L).and(1) == 0L
-            val showCursor = cursor0 == cursor1 && showCursor0
+            val showCursor = showCursor0 && inputMode == Controls.InputMode.TEXT && cursor0 == cursor1
 
             flatShader.use()
             color4(flatShader.color, textColor, 1f)
@@ -127,6 +128,7 @@ object Rendering {
             val charWidth = Font.getOffset('o', ' ')
             val lineNumberWidth = lines.size.toString().length + 2
             val lineNumberOffset = lineNumberWidth * charWidth
+            Window.availableWidth = width - lineNumberOffset
 
             scrollX = max(min(scrollX, maxScrollX), 0)
             scrollY = max(min(scrollY, maxScrollY), 0)
@@ -139,7 +141,7 @@ object Rendering {
             val minCursor = minI(cursor0, cursor1)
             val maxCursor = maxI(cursor0, cursor1)
 
-            var y = -scrollY
+            var y = -scrollY + numHiddenLines * lineHeight
 
             var selectionStartX = lineNumberOffset
             var selectionStartY = 0L
@@ -333,10 +335,16 @@ object Rendering {
                 color4(flatShader.color, bgColor, 1f)
                 drawQuad(flatShader.bounds, 0, 0, width, lineHeight)
 
+                val searchInput = inputMode == Controls.InputMode.SEARCH || inputMode == Controls.InputMode.SEARCH_ONLY
                 val searched = Controls.searched.text
                 if (searched.isNotEmpty()) {
-                    drawText(searched, 0, 0, textColor, Controls.searched.cursor)
-                } else drawText("Search: ", 0, 0, middle, 8)
+                    drawText(
+                        searched, 0, 0, textColor,
+                        if (searchInput) Controls.searched.cursor else -1
+                    )
+                } else {
+                    drawText("Search: ", 0, 0, middle, if (searchInput) 8 else -1)
+                }
 
                 color4(flatShader.color, middle, 1f)
                 drawQuad(flatShader.bounds, 0, lineHeight, width, 1)
@@ -344,10 +352,16 @@ object Rendering {
                     color4(flatShader.color, bgColor, 1f)
                     drawQuad(flatShader.bounds, 0, lineHeight + 1, width, lineHeight - 1)
 
+                    val replaceInput = inputMode == Controls.InputMode.REPLACE
                     val replaced = Controls.replaced.text
                     if (replaced.isNotEmpty()) {
-                        drawText(replaced, 0, lineHeight, textColor, Controls.replaced.cursor)
-                    } else drawText("Replace: ", 0, lineHeight, middle, 9)
+                        drawText(
+                            replaced, 0, lineHeight, textColor,
+                            if (replaceInput) Controls.replaced.cursor else -1
+                        )
+                    } else {
+                        drawText("Replace: ", 0, lineHeight, middle, if (replaceInput) 9 else -1)
+                    }
 
                     color4(flatShader.color, middle, 1f)
                     drawQuad(flatShader.bounds, 0, lineHeight * 2, width, 1)
