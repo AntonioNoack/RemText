@@ -7,7 +7,6 @@ import java.io.File
 
 // todo:
 //  block folding
-//  find & replace
 //  load files?
 //  JSON/syntax highlighting
 //  JSON formatter
@@ -22,6 +21,7 @@ import java.io.File
 //      we have paste & delete selection ->
 //      save what we delete, save what we paste and where,
 //      and then we should be able to easily undo and redo these operations
+//  find & replace
 
 // done first use engine for text-layout,
 //  later move away from it for best startup times
@@ -41,3 +41,50 @@ fun main(args: Array<String>) {
     addListeners()
     renderWindow()
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

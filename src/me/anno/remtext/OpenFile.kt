@@ -44,8 +44,6 @@ class OpenFile(val file: File) {
         lines.clear()
 
         thread(name = file.name) {
-            // todo total-size scrollbars
-
             val offsets = IntArray(text.length + 1)
 
             var i0 = 0
@@ -54,27 +52,18 @@ class OpenFile(val file: File) {
                 if (i1 < 0) i1 = text.length
                 val nextI0 = i1 + 1
 
-                if (text[i1 - 1] == '\r') i1--
+                if (i1 > 0 && text[i1 - 1] == '\r') i1--
                 fillOffsets(text, i0, i1, offsets)
                 lines.add(Line(text, i0, i1, offsets))
                 countedLinesW = -1
 
                 i0 = nextI0
             }
-
-            // applyStressTest(100_000)
+            if (text.endsWith('\n')) {
+                lines.add(Line(""))
+            }
 
             finished = reasonablySized
-        }
-    }
-
-    @Suppress("SameParameterValue")
-    private fun applyStressTest(numRepeats: Int) {
-        val subList = ArrayList(lines)
-        lines.ensureCapacity(numRepeats * lines.size)
-        repeat(numRepeats - 1) {
-            lines.addAll(subList)
-            countedLinesW = -1
         }
     }
 

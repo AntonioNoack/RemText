@@ -29,8 +29,8 @@ object Window {
         glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE)
         glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE)
 
-        val width = 400
-        val height = 300
+        val width = 800
+        val height = 600
         window = glfwCreateWindow(width, height, "LWJGL Quad Example", NULL, NULL)
         if (window == NULL) error("Failed to create GLFW window")
 

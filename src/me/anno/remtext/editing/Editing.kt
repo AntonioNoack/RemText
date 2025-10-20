@@ -172,8 +172,8 @@ object Editing {
 
     fun getStringFromRange(minCursor: Cursor, maxCursor: Cursor): String {
         val lines = file.lines
-        if (cursor0.lineIndex == cursor1.lineIndex) {
-            val line = lines[cursor0.lineIndex]
+        if (minCursor.lineIndex == maxCursor.lineIndex) {
+            val line = lines[minCursor.lineIndex]
             return line.text.substring(minCursor.i, maxCursor.i)
         } else {
             val minLine = lines[minCursor.lineIndex]

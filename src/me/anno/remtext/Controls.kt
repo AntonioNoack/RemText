@@ -26,6 +26,7 @@ import me.anno.remtext.editing.Editing.highLevelPaste
 import me.anno.remtext.editing.Editing.sameX
 import me.anno.remtext.editing.InputMode
 import me.anno.remtext.editing.TextBox
+import me.anno.remtext.font.Font
 import me.anno.remtext.font.Font.lineHeight
 import me.anno.remtext.font.Line
 import org.lwjgl.glfw.GLFW.*
@@ -56,6 +57,7 @@ object Controls {
         glfwSetKeyCallback(window) { _, key, _, action, _ ->
             // action: GLFW_PRESS, GLFW_RELEASE or GLFW_REPEAT
             // key: The keyboard key that was pressed or released.
+            
             val pressed = action == GLFW_PRESS
             val typed = pressed || action == GLFW_REPEAT
 
@@ -75,6 +77,8 @@ object Controls {
                 GLFW_KEY_F2 -> if (pressed) {
                     file.wrapLines = !file.wrapLines
                 }
+                GLFW_KEY_PAGE_UP -> Font.inc()
+                GLFW_KEY_PAGE_DOWN -> Font.dec()
                 GLFW_KEY_ESCAPE -> when (inputMode) {
                     InputMode.TEXT -> glfwSetWindowShouldClose(window, true)
                     else -> inputMode = InputMode.TEXT
@@ -143,6 +147,7 @@ object Controls {
                 GLFW_KEY_S -> {
                     if (pressed && isControlDown && file.finished) {
                         file.file.parentFile.mkdirs()
+                        println("text: '${getFullString()}'")
                         file.file.writeText(getFullString())
                         file.modified = false
                         glfwSetWindowTitle(window, "$WINDOW_TITLE - ${file.file.name}")

@@ -76,8 +76,13 @@ class Line(
         return Line(joinedText, 0, joinedText.length, joinedOffset)
     }
 
-    var countedLinesAtW = 0
-    var countedLinesW = 0
+    private var countedLinesAtW = 0
+    private var countedLinesW = 0
+
+    fun recalculate() {
+        countedLinesW = 0
+        fillOffsets(text, i0, i1, offsets)
+    }
 
     fun subList(i0: Int, i1: Int) = Line(text, i0, i1, offsets)
 

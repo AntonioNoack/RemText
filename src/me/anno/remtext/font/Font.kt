@@ -1,5 +1,6 @@
 package me.anno.remtext.font
 
+import me.anno.remtext.Rendering
 import me.anno.remtext.gfx.PixelData
 import me.anno.remtext.gfx.Texture
 import org.lwjgl.opengl.GL11C.glDeleteTextures
@@ -15,25 +16,34 @@ import kotlin.math.min
 
 object Font {
 
-    private val awtFont = Font("Verdana", 0, 15)
-    private val renderContext = FontRenderContext(null, true, true)
-
-    val baselineY: Int
-    val lineHeight: Int
-
-    init {
-        val exampleLayout = TextLayout("o", awtFont, renderContext)
-        baselineY = exampleLayout.ascent.toInt()
-        lineHeight = (exampleLayout.ascent + exampleLayout.descent).toInt()
-    }
-
-    private val textures = arrayOfNulls<Texture>(65535)
-
     private const val ASCII0 = 32
     private const val NUM_ASCIIS = 128 - ASCII0
 
+    private var awtFont = Font("Verdana", 0, 15)
+    private val renderContext = FontRenderContext(null, true, true)
+
+    private val textures = arrayOfNulls<Texture>(65535)
     private val asciiOffsets = IntArray(NUM_ASCIIS * NUM_ASCIIS)
     private val otherOffsets = HashMap<Int, Int>()
+
+    var baselineY: Int = 8
+        private set
+    var lineHeight: Int = 12
+        private set
+    var spaceWidth: Int = 6
+        private set
+
+    init {
+        calculateBaseSizes()
+    }
+
+    private fun calculateBaseSizes() {
+        val exampleLayout = TextLayout("o", awtFont, renderContext)
+        baselineY = exampleLayout.ascent.toInt()
+        lineHeight = (exampleLayout.ascent + exampleLayout.descent).toInt()
+        val xLength = max(len(charArrayOf('o')).toFloat(), 1f)
+        spaceWidth = (min(xLength, awtFont.size.toFloat()) * 0.667f).toInt()
+    }
 
     fun getTexture(char: Char): Texture {
         var texture = textures[char.code]
@@ -84,11 +94,6 @@ object Font {
         return Texture(PixelData(image))
     }
 
-    val spaceWidth = run {
-        val xLength = max(len(charArrayOf('o')).toFloat(), 1f)
-        (min(xLength, awtFont.size.toFloat()) * 0.667f).toInt()
-    }
-
     private fun len(chars: CharArray): Double {
         return TextLayout(String(chars), awtFont, renderContext).bounds.maxX
     }
@@ -105,6 +110,29 @@ object Font {
     fun destroyTextures() {
         val textures = textures.filterNotNull()
         glDeleteTextures(IntArray(textures.size) { textures[it].pointer })
+    }
+
+    fun inc() = setFontSize(awtFont.size + 1)
+    fun dec() = setFontSize(max(awtFont.size - 1, 3))
+
+    fun setFontSize(newSize: Int) {
+        if (awtFont.size == newSize) return
+        awtFont = awtFont.deriveFont(newSize.toFloat())
+        calculateBaseSizes()
+
+        // clear textures
+        destroyTextures()
+        textures.fill(null)
+
+        // clear offsets
+        asciiOffsets.fill(0)
+        otherOffsets.clear()
+
+        // clear line-count cache in lines & recalculate offsets
+        val lines = Rendering.file.lines
+        for (i in lines.indices) {
+            lines[i].recalculate()
+        }
     }
 
 }
