@@ -1,8 +1,8 @@
 # RemText
 
-Simple, fast text editor, because "TextEditor" on Ubuntu was too slow for me*
-![Promo.png](promo/Promo.png)
+Simple, fast text editor, because "TextEditor" on Ubuntu was too slow for me
 
+![Promo.png](promo/Promo.png)
 *I had a 4MB single-line JSON file, and it would lag horribly for no apparent reason
 
 ## Controls
@@ -44,3 +44,12 @@ Simple, fast text editor, because "TextEditor" on Ubuntu was too slow for me*
 - Emojis
 - Custom Fonts
 - Custom Themes
+
+## OS-Support
+This implementation uses OpenGL 3.3, but could be easily switched with Java AWT if needed.
+It should be supported by Windows, Linux and MacOS equally.
+
+## Icon
+I generated a nice icon with ChatGPT :)
+
+![Icon64.png](assets/Icon256.png)

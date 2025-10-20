@@ -100,11 +100,11 @@ object Font {
 
     private fun calculateOffset(charA: Char, charB: Char): Int {
         if (charA == ' ') return spaceWidth
-        if (charB == ' ') return len(charArrayOf(charA)).toInt()
+        if (charB == ' ') return max(len(charArrayOf(charA)).toInt(), 1)
 
         val lenAB = len(charArrayOf(charA, charB))
         val lenB = len(charArrayOf(charB))
-        return (lenAB - lenB).toInt()
+        return max((lenAB - lenB).toInt(), 1)
     }
 
     fun destroyTextures() {

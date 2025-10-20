@@ -42,6 +42,28 @@ object Window {
 
         glfwSetWindowTitle(window, "$WINDOW_TITLE - ${file.file.name}")
 
+        // todo get this to work...
+        /*val icon = ImageIO.read(Window.javaClass.getResourceAsStream("/Icon256.png"))
+        val image = GLFWImage.malloc()
+        val pixelBytes = ByteBuffer.allocateDirect(icon.width * icon.height * 4).order(ByteOrder.native())
+        for(y in 0 until icon.height) {
+            for(x in 0 until icon.width) {
+                val rgb = icon.getRGB(x,y)
+                // channels are not tested yet
+                pixelBytes.put((rgb shr 24).toByte())
+                pixelBytes.put((rgb shr 16).toByte())
+                pixelBytes.put((rgb shr 8).toByte())
+                pixelBytes.put((rgb shr 0).toByte())
+            }
+        }
+        pixelBytes.flip()
+        image.set(icon.width, icon.height, pixelBytes)
+
+        val buffer = GLFWImage.malloc(1)
+        buffer.put(0, image)
+        glfwSetWindowIcon(window, buffer)
+        buffer.free()*/
+
         glfwMakeContextCurrent(window)
         glfwSwapInterval(1) // vsync
         glfwShowWindow(window)
