@@ -19,49 +19,69 @@ object Colors {
     const val VARIABLE = 10.toByte()
     const val DOC_COMMENT = 11.toByte()
 
-    val textColor = Color(0xdddddd)
-    val commentColor = Color(0x7FD723)
-    val numberColor = Color(0x33bbcc)
-    val symbolColor = Color(0xaaaaaa)
-    val keywordColor = Color(0xE59F39)
-    val bracketColor = Color(0xc0a070)
-    val stringColor = Color(0x6DBF24)
-    val todoColor = Color(0xA7BF23)
-    val variableColor = Color(0xffffff)
-    val docColor = Color(0x7FD723)
+    const val COLOR_BITS = 4
+    const val MASK = (1 shl COLOR_BITS) - 1
 
-    val darkStyle = arrayOf(
-        textColor,
-        commentColor,
-        commentColor,
-        numberColor,
-        symbolColor,
-        keywordColor,
-        bracketColor,
-        stringColor,
-        stringColor,
-        todoColor,
-        variableColor,
-        docColor,
-    )
+    val darkStyle = run {
 
-    val lightStyle = arrayOf(
-        textColor,
-        commentColor,
-        commentColor,
-        numberColor,
-        symbolColor,
-        keywordColor,
-        bracketColor,
-        stringColor,
-        stringColor,
-        todoColor,
-        variableColor,
-        docColor,
-    )
+        val textColor = Color(0xDDDDDD)
+        val commentColor = Color(0x8ACF24)
+        val numberColor = Color(0x33BCCC)
+        val symbolColor = Color(0xBBBBBB)
+        val keywordColor = Color(0xE5A440)
+        val bracketColor = Color(0xC0A070)
+        val stringColor = Color(0xA0CF7E)
+        val todoColor = Color(0xC0ED2A)
+        val variableColor = Color(0xFFFFFF)
+        val docColor = Color(0x8ACF24)
+
+        arrayOf(
+            textColor,
+            commentColor,
+            commentColor,
+            numberColor,
+            symbolColor,
+            keywordColor,
+            bracketColor,
+            stringColor,
+            stringColor,
+            todoColor,
+            variableColor,
+            docColor,
+        )
+    }
+
+    val lightStyle = run {
+
+        val textColor = Color(0x222222)
+        val commentColor = Color(0x365514)
+        val numberColor = Color(0x155E63)
+        val symbolColor = Color(0x555555)
+        val keywordColor = Color(0x6D3F1B)
+        val bracketColor = Color(0x594B33)
+        val stringColor = Color(0x4D653F)
+        val todoColor = Color(0x5A1F6F)
+        val variableColor = Color(0x000000)
+        val docColor = Color(0x365514)
+
+        arrayOf(
+            textColor,
+            commentColor,
+            commentColor,
+            numberColor,
+            symbolColor,
+            keywordColor,
+            bracketColor,
+            stringColor,
+            stringColor,
+            todoColor,
+            variableColor,
+            docColor,
+        )
+    }
 
     val style get() = if (Window.isDarkTheme) darkStyle else lightStyle
-    operator fun get(color: Byte): Color = style[color.toInt()]
+    operator fun get(color: Byte): Color = style[color.toInt() and MASK]
 
     operator fun get(char: Char): Color {
         val type = when (char) {
