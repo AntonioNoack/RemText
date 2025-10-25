@@ -158,15 +158,21 @@ object Controls {
                 GLFW_KEY_F -> {
                     if (pressed && isControlDown) {
                         if (isShiftDown) {
-                            val options = AutoFormatOptions.nextOption(file.language)
-                            val newLines = file.language?.format(file.lines, options)
-                            if (newLines != null && newLines !== file.lines) {
-                                println("Formatted ${file.file.absolutePath} using $options")
-                                file.lines.clear()
-                                file.lines.addAll(newLines)
-                                Editing.onChange()
+                            val language = file.language
+                            if(language != null) {
+                                val options = AutoFormatOptions.nextOption(file.language)
+                                val newLines = language.format(file.lines, options)
+                                if (newLines != null) {
+                                    println("Formatted ${file.file.absolutePath} using $options")
+                                    language.colorize(newLines)
+                                    file.lines.clear()
+                                    file.lines.addAll(newLines)
+                                    Editing.onChange()
+                                } else {
+                                    println("No valid formatter found!")
+                                }
                             } else {
-                                println("No valid formatter found!")
+                                println("No language detected!")
                             }
                         } else {
                             inputMode = InputMode.SEARCH_ONLY

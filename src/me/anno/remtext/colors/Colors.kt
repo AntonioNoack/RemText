@@ -17,16 +17,18 @@ object Colors {
     const val ML_STRING = 8.toByte()
     const val TODO = 9.toByte()
     const val VARIABLE = 10.toByte()
+    const val DOC_COMMENT = 11.toByte()
 
-    val textColor = Color(0xccccc7)
+    val textColor = Color(0xdddddd)
     val commentColor = Color(0x7FD723)
     val numberColor = Color(0x33bbcc)
-    val symbolColor = Color(0xffa575)
-    val keywordColor = Color(0xB07530)
+    val symbolColor = Color(0xaaaaaa)
+    val keywordColor = Color(0xE59F39)
     val bracketColor = Color(0xc0a070)
     val stringColor = Color(0x6DBF24)
     val todoColor = Color(0xA7BF23)
-    val variableColor = Color(0xfffffa)
+    val variableColor = Color(0xffffff)
+    val docColor = Color(0x7FD723)
 
     val darkStyle = arrayOf(
         textColor,
@@ -39,7 +41,8 @@ object Colors {
         stringColor,
         stringColor,
         todoColor,
-        variableColor
+        variableColor,
+        docColor,
     )
 
     val lightStyle = arrayOf(
@@ -53,7 +56,8 @@ object Colors {
         stringColor,
         stringColor,
         todoColor,
-        variableColor
+        variableColor,
+        docColor,
     )
 
     val style get() = if (Window.isDarkTheme) darkStyle else lightStyle

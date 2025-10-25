@@ -31,7 +31,7 @@ fun main(args: Array<String>) {
         File(args[0])
     } else {
         val home = File(System.getProperty("user.home"))
-        File(home, "Documents/Test Text.xml")
+        File(home, "Documents/Test Text.rs")
     }
 
     Rendering.file = OpenFile(file)

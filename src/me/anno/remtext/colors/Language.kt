@@ -5,14 +5,12 @@ import me.anno.remtext.formatting.AutoFormatOptions
 
 interface Language {
     fun highlight(line: Line, state0: Byte): Byte
-    fun format(lines: List<Line>, options: AutoFormatOptions): List<Line> = lines
+    fun format(lines: List<Line>, options: AutoFormatOptions): List<Line>? = null
 
-    fun List<Line>.colorize(): List<Line> {
+    fun colorize(lines: List<Line>) {
         var state = Colors.DEFAULT
-        for (i in indices) {
-            state = highlight(this[i], state)
+        for (i in lines.indices) {
+            state = highlight(lines[i], state)
         }
-        return this
     }
-
 }

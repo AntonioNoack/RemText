@@ -16,7 +16,7 @@ import me.anno.remtext.formatting.XMLFormatter
 /**
  * ChatGPT-generated, and slightly adjusted
  * */
-class XMLLanguage(val isHtml: Boolean = false) : Language {
+class XMLLanguage(val isHTML: Boolean = false) : Language {
 
     companion object {
         private fun isNameChar(c: Char): Boolean {
@@ -62,7 +62,7 @@ class XMLLanguage(val isHtml: Boolean = false) : Language {
                         }
                     }
                     line.startsWith("<!DOCTYPE", i, true) -> {
-                        val end = line.indexOf(">", i + 9, false)
+                        val end = line.indexOf(">", i + 9)
                         if (end >= 0) {
                             colors.fill(KEYWORD, i, end + 1)
                             i = end + 1
@@ -71,9 +71,9 @@ class XMLLanguage(val isHtml: Boolean = false) : Language {
                             i = line.i1
                         }
                     }
-                    line.startsWith("<?", i, false) -> {
+                    line.startsWith("<?", i) -> {
                         // --- PROCESSING INSTRUCTION ---
-                        val end = line.indexOf("?>", i + 2, false)
+                        val end = line.indexOf("?>", i + 2)
                         if (end >= 0) {
                             colors.fill(KEYWORD, i, end + 2)
                             i = end + 2
@@ -81,6 +81,49 @@ class XMLLanguage(val isHtml: Boolean = false) : Language {
                             colors.fill(KEYWORD, i, line.i1)
                             i = line.i1
                         }
+                    }
+                    line.startsWith("{{", i) -> {
+                        var end = line.indexOf("}}", i + 2)
+                        end = if (end < 0) line.i1 else end + 2
+                        // Delegate to JS/CLanguage highlighting for the inner expression
+                        val subLine = line.subList(i, end)
+                        CLikeLanguage(CLikeLanguageType.JAVASCRIPT)
+                            .highlight(subLine, DEFAULT)
+                        i = end
+                    }
+                    // todo support multi-line scripts somehow...
+                    line.startsWith("<script", i, true) -> {
+                        // Skip tag and attributes
+                        val tagEnd = line.indexOf(">", i)
+                        val scriptStart = if (tagEnd >= 0) tagEnd + 1 else i
+                        val scriptEndTag = line.indexOf("</script>", scriptStart, true)
+                            .let { if (it < 0) line.i1 else it }
+
+                        // Delegate to JS highlighter
+                        val subLine = line.subList(scriptStart, scriptEndTag)
+                        CLikeLanguage(CLikeLanguageType.JAVASCRIPT)
+                            .highlight(subLine, DEFAULT)
+                        i = scriptEndTag
+                    }
+                    // todo support multi-line scripts somehow...
+                    line.startsWith("<?php", i) || line.startsWith("<?=", i) -> {
+                        val endTag = line.indexOf("?>", i + 5).let { if (it < 0) line.i1 else it + 2 }
+                        val subLine = line.subList(i, endTag)
+                        CLikeLanguage(CLikeLanguageType.PHP)
+                            .highlight(subLine, DEFAULT)
+                        i = endTag
+                    }
+                    // todo css-highlighting inside style-properties, and support multi-line somehow
+                    line.startsWith("<style", i, true) -> {
+                        val tagEnd = line.indexOf(">", i).let { if (it < 0) line.i1 else it }
+                        val styleStart = tagEnd + 1
+                        val styleEnd = line.indexOf("</style>", styleStart, true).let { if (it < 0) line.i1 else it }
+                        // Highlight tag normally
+                        for (j in i..tagEnd) colors[j] = SYMBOL
+                        // Delegate to CSS highlighter
+                        val subLine = line.subList(styleStart, styleEnd)
+                        CSSLanguage.highlight(subLine, DEFAULT)
+                        i = styleEnd + 8 // "</style>".length
                     }
                     text[i] == '<' -> {
                         // --- TAG START ---
@@ -145,7 +188,7 @@ class XMLLanguage(val isHtml: Boolean = false) : Language {
                     else -> i++
                 }
                 ML_COMMENT -> {
-                    val end = line.indexOf("-->", i, false)
+                    val end = line.indexOf("-->", i)
                     if (end >= 0) {
                         colors.fill(ML_COMMENT, i, end + 3)
                         i = end + 3
@@ -159,7 +202,7 @@ class XMLLanguage(val isHtml: Boolean = false) : Language {
                     // =================================
                     // MULTILINE CDATA
                     // =================================
-                    val end = line.indexOf("]]>", i, false)
+                    val end = line.indexOf("]]>", i)
                     if (end >= 0) {
                         colors.fill(ML_STRING, i, end + 3)
                         i = end + 3
@@ -169,7 +212,7 @@ class XMLLanguage(val isHtml: Boolean = false) : Language {
                         i = line.i1
                     }
                 }
-                STRING -> throw IllegalStateException("STRING should not occur outside attributes")
+                else -> i++
             }
         }
 
@@ -177,10 +220,10 @@ class XMLLanguage(val isHtml: Boolean = false) : Language {
     }
 
     override fun format(lines: List<Line>, options: AutoFormatOptions): List<Line> {
-        return XMLFormatter.format(lines, options.indentation, isHtml).colorize()
+        return XMLFormatter.format(lines, options.indentation, isHTML)
     }
 
     override fun toString(): String {
-        return if (isHtml) "HTML" else "XML"
+        return if (isHTML) "HTML" else "XML"
     }
 }

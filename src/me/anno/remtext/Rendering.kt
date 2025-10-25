@@ -145,6 +145,7 @@ object Rendering {
             val maxCursor = maxI(cursor0, cursor1)
 
             var y = -scrollY + numHiddenLines * lineHeight
+            val minY0 = numHiddenLines * lineHeight - 5 // -5, so arrow-up works
 
             var selectionStartX = lineNumberOffset
             var selectionStartY = 0L
@@ -221,7 +222,7 @@ object Rendering {
 
                     val wrappedLines = line.getNumLines(width - lineNumberOffset)
                     val drawnHeight = wrappedLines * lineHeight
-                    if (y < height && y + drawnHeight > 0) {
+                    if (y < height && y + drawnHeight >= minY0) {
 
                         lineStarts.add(LineStart(line.i0, lineIndex, lineNumberOffset, y.toInt()))
 
@@ -245,14 +246,14 @@ object Rendering {
                             }
 
                             val tex = Font.getTexture(curr)
-                            if (y + tex.height > 0) {
+                            if (y + tex.height >= minY0) {
                                 onChar(line, lineIndex, i, x - dxi, tex.width)
                                 glBindTexture(GL_TEXTURE_2D, tex.pointer)
                                 drawQuad(texShader.bounds, x - dxi, y, tex.width, tex.height)
                             }
                         }
 
-                        if (showCursor && y + lineHeight >= 0 && y < height && lineIndex == cursor0.lineIndex && cursor0.i >= line.i1) {
+                        if (showCursor && y + lineHeight >= minY0 && y < height && lineIndex == cursor0.lineIndex && cursor0.i >= line.i1) {
                             val x = line.getOffset(line.i1) + lineNumberOffset - dxi
                             drawCursor(x, y.toInt())
                         }
@@ -262,7 +263,7 @@ object Rendering {
                         numLines += (wrappedLines - 1)
                         y += lineHeight * (wrappedLines - 1)
                     }
-                } else if (y < height && y + lineHeight > 0) {
+                } else if (y < height && y + lineHeight >= minY0) {
 
                     // draw text
                     val dxi = lineNumberOffset - scrollX.toInt()
@@ -292,13 +293,13 @@ object Rendering {
                         }
                     }
 
-                    if (showCursor && y + lineHeight >= 0 && y < height && lineIndex == cursor0.lineIndex && cursor0.i >= line.i1) {
+                    if (showCursor && y + lineHeight >= minY0 && y < height && lineIndex == cursor0.lineIndex && cursor0.i >= line.i1) {
                         val x = line.getOffset(line.i1) + lineNumberOffset
                         drawCursor(x, y.toInt())
                     }
                 }
 
-                if (y0 < height && y0 + lineHeight > 0) {
+                if (y0 < height && y0 + lineHeight > minY0) {
                     drawLineNumber(
                         flatShader, texShader, y0.toInt(), lineNumberOffset,
                         lineIndex, charWidth, textColor, bgColor
