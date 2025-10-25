@@ -158,6 +158,16 @@ class XMLLanguage(val isHTML: Boolean = false) : Language {
                                     i = line.i1
                                 }
                             }
+                            line.startsWith("<?php", i, true) -> {
+                                colors.fill(KEYWORD, i, i + 5)
+                                state = packState(PHP_INDEX, DEFAULT)
+                                i += 5
+                            }
+                            line.startsWith("<?=", i) -> {
+                                colors.fill(KEYWORD, i, i + 3)
+                                state = packState(PHP_INDEX, DEFAULT)
+                                i += 3
+                            }
                             line.startsWith("<?", i) -> {
                                 // --- PROCESSING INSTRUCTION ---
                                 val end = line.indexOf("?>", i + 2)
@@ -189,24 +199,15 @@ class XMLLanguage(val isHTML: Boolean = false) : Language {
                                     } else handleTag()
                                 } else handleTag()
                             }
-                            line.startsWith("<?php", i) -> {
-                                colors.fill(KEYWORD, i, i + 5)
-                                state = packState(PHP_INDEX, DEFAULT)
-                                i += 5
-                            }
-                            line.startsWith("<?=", i) -> {
-                                colors.fill(KEYWORD, i, i + 3)
-                                state = packState(PHP_INDEX, DEFAULT)
-                                i += 3
-                            }
                             // todo css-highlighting inside style-properties
                             line.startsWith("<style", i, true) -> {
                                 if (isHTML) {
                                     // Skip tag and attributes
                                     val tagEnd = line.indexOf(">", i)
                                     if (tagEnd >= 0) {
-                                        i = tagEnd + 1
+                                        colors.fill(KEYWORD, i, tagEnd + 1)
                                         state = packState(CSS_INDEX, DEFAULT)
+                                        i = tagEnd + 1
                                     } else {
                                         handleTag()
                                     }
@@ -268,22 +269,20 @@ class XMLLanguage(val isHTML: Boolean = false) : Language {
 
     fun detectEndScriptSafely(line: Line, i0: Int, suffix: String, langIndex: Int): Int {
         var i = i0
-        while (i <= line.i1 - suffix.length) {
-            if (line.startsWith(suffix, i, true)) {
-                val colors = line.colors!!
-                println("found end '$suffix' at $i, color: ${colors[i]}")
-                // Only if current position is DEFAULT in JS
-                if (colors[i] != STRING && colors[i] != ML_COMMENT) {
-                    for (j in i0 until i) {
-                        colors[j] = packState(langIndex, colors[j])
-                    }
-                    colors.fill(KEYWORD, i, i + suffix.length)
-                    return i
+        while (true) {
+            i = line.indexOf(suffix, i, true)
+            if (i < 0) return -1
+
+            val colors = line.colors!!
+            // Only if current position is DEFAULT in JS
+            if (colors[i] != STRING && colors[i] != ML_COMMENT) {
+                for (j in i0 until i) {
+                    colors[j] = packState(langIndex, colors[j])
                 }
+                colors.fill(KEYWORD, i, i + suffix.length)
+                return i + suffix.length
             }
-            i++
         }
-        return -1
     }
 
     override fun format(lines: List<Line>, options: AutoFormatOptions): List<Line> {
