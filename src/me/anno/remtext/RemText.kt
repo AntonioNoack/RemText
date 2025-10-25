@@ -6,8 +6,9 @@ import me.anno.remtext.Window.createWindow
 import java.io.File
 
 // todo:
-//  block folding
-//  load files?
+//  block folding: count block-depth, ignore strings, & allow folding them...
+//  multiple open files? / new file menu?
+//  drag text & scroll at edge of screen when mouse-is-down+sth-selected
 //  JSON/syntax highlighting
 //  JSON formatter
 //  hex-editor mode?
@@ -32,7 +33,7 @@ fun main(args: Array<String>) {
         File(args[0])
     } else {
         val home = File(System.getProperty("user.home"))
-        File(home, "Documents/Test Text.txt")
+        File(home, "Documents/Test Text.json")
     }
 
     Rendering.file = OpenFile(file)

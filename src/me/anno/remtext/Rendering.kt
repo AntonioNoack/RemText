@@ -14,6 +14,7 @@ import me.anno.remtext.editing.LineStart
 import me.anno.remtext.editing.TextBox
 import me.anno.remtext.font.Font
 import me.anno.remtext.font.Font.lineHeight
+import me.anno.remtext.gfx.Color
 import me.anno.remtext.gfx.FlatColorShader
 import me.anno.remtext.gfx.Quad
 import me.anno.remtext.gfx.TextureColorShader
@@ -24,8 +25,6 @@ import kotlin.math.max
 import kotlin.math.min
 
 object Rendering {
-
-    class Color(val r: Float, val g: Float, val b: Float)
 
     lateinit var file: OpenFile
 

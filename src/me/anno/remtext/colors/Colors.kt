@@ -1,0 +1,67 @@
+package me.anno.remtext.colors
+
+import me.anno.remtext.Window
+import me.anno.remtext.gfx.Color
+
+// todo load them from a config .txt file?
+object Colors {
+
+    const val DEFAULT = 0.toByte()
+    const val COMMENT = 1.toByte()
+    const val ML_COMMENT = 2.toByte()
+    const val NUMBER = 3.toByte()
+    const val SYMBOL = 4.toByte()
+    const val KEYWORD = 5.toByte()
+    const val BRACKET = 6.toByte()
+    const val STRING = 7.toByte()
+    const val ML_STRING = 8.toByte()
+    const val TODO = 9.toByte()
+
+    val textColor = Color(0xccccc7)
+    val commentColor = Color(0x7FD723)
+    val numberColor = Color(0x33bbcc)
+    val symbolColor = Color(0xffa575)
+    val keywordColor = Color(0xB07530)
+    val bracketColor = Color(0xc0a070)
+    val stringColor = Color(0x6DBF24)
+    val todoColor = Color(0xA7BF23)
+
+    val darkStyle = arrayOf(
+        textColor,
+        commentColor,
+        commentColor,
+        numberColor,
+        symbolColor,
+        keywordColor,
+        bracketColor,
+        stringColor,
+        stringColor,
+        todoColor
+    )
+
+    val lightStyle = arrayOf(
+        textColor,
+        commentColor,
+        commentColor,
+        numberColor,
+        symbolColor,
+        keywordColor,
+        bracketColor,
+        stringColor,
+        stringColor,
+        todoColor
+    )
+
+    val style get() = if (Window.isDarkTheme) darkStyle else lightStyle
+    operator fun get(color: Byte): Color = style[color.toInt()]
+
+    operator fun get(char: Char): Color {
+        val type = when (char) {
+            in "()[]{}" -> BRACKET
+            in "+-/*<>=?:" -> SYMBOL
+            in '0'..'9' -> NUMBER
+            else -> DEFAULT
+        }
+        return this[type]
+    }
+}

@@ -147,8 +147,8 @@ object Controls {
                 GLFW_KEY_S -> {
                     if (pressed && isControlDown && file.finished) {
                         file.file.parentFile.mkdirs()
-                        println("text: '${getFullString()}'")
                         file.file.writeText(getFullString())
+                        println("Saved ${file.file.absolutePath}")
                         file.modified = false
                         glfwSetWindowTitle(window, "$WINDOW_TITLE - ${file.file.name}")
                     }

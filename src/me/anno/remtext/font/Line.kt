@@ -1,14 +1,20 @@
 package me.anno.remtext.font
 
+import me.anno.remtext.colors.Highlighter
 import kotlin.math.max
 import kotlin.math.min
 
 class Line(
     val text: String, val i0: Int, val i1: Int,
-    private val offsets: IntArray
+    private val offsets: IntArray,
+    val colors: ByteArray,
 ) {
 
-    constructor(text: String) : this(text, 0, text.length, IntArray(text.length + 1)) {
+    constructor(text: String) : this(
+        text, 0, text.length,
+        IntArray(text.length + 1),
+        ByteArray(text.length),
+    ) {
         fillOffsets(text, i0, i1, offsets)
     }
 
@@ -73,7 +79,10 @@ class Line(
             joinedOffset[i + sizeJM] = other.offsets[k0 + i] + delta
         }
         validateOffsets(joinedText, 0, joinedText.length, joinedOffset)
-        return Line(joinedText, 0, joinedText.length, joinedOffset)
+        return Line(
+            joinedText, 0, joinedText.length, joinedOffset,
+            ByteArray(joinedText.length),
+        )
     }
 
     private var countedLinesAtW = 0
@@ -84,7 +93,7 @@ class Line(
         fillOffsets(text, i0, i1, offsets)
     }
 
-    fun subList(i0: Int, i1: Int) = Line(text, i0, i1, offsets)
+    fun subList(i0: Int, i1: Int) = Line(text, i0, i1, offsets, colors)
 
     fun getNumLines(width: Int): Int {
         if (countedLinesW == width) {
@@ -114,4 +123,23 @@ class Line(
         }
         return numLines
     }
+
+    fun indexOf(start: Char, i0: Int, ignoreCase: Boolean): Int {
+        for (i in max(i0, this.i0) until i1 - 1) {
+            if (text[i].equals(start, ignoreCase)) return i
+        }
+        return -1
+    }
+
+    fun indexOf(start: String, i0: Int, ignoreCase: Boolean): Int {
+        for (i in max(i0, this.i0) until i1 - start.length) {
+            if (text.startsWith(start, i, ignoreCase)) return i
+        }
+        return -1
+    }
+
+    fun startsWith(start: String, i0: Int, ignoreCase: Boolean = false): Boolean {
+        return i0 >= this.i0 && i0 + start.length <= i1 && text.startsWith(start, i0, ignoreCase)
+    }
+
 }
