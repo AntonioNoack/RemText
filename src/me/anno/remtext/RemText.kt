@@ -10,6 +10,7 @@ import java.io.File
 //  multiple open files? / new file menu?
 //  drag text & scroll at edge of screen when mouse-is-down+sth-selected
 //  hex-editor mode?
+
 // done:
 //  high performance,
 //  quick starting, light-weight text editor
@@ -31,7 +32,7 @@ fun main(args: Array<String>) {
         File(args[0])
     } else {
         val home = File(System.getProperty("user.home"))
-        File(home, "Documents/Test Text.rs")
+        File(home, "Documents/Test Text.html")
     }
 
     Rendering.file = OpenFile(file)

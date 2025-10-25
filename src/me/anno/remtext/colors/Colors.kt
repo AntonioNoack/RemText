@@ -20,7 +20,7 @@ object Colors {
     const val DOC_COMMENT = 11.toByte()
 
     const val COLOR_BITS = 4
-    const val MASK = (1 shl COLOR_BITS) - 1
+    const val COLOR_MASK = (1 shl COLOR_BITS) - 1
 
     val darkStyle = run {
 
@@ -81,7 +81,7 @@ object Colors {
     }
 
     val style get() = if (Window.isDarkTheme) darkStyle else lightStyle
-    operator fun get(color: Byte): Color = style[color.toInt() and MASK]
+    operator fun get(color: Byte): Color = style[color.toInt() and COLOR_MASK]
 
     operator fun get(char: Char): Color {
         val type = when (char) {

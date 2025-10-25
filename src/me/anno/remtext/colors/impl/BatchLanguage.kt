@@ -65,7 +65,9 @@ object BatchLanguage : Language {
             }
         }
 
-        return colors[line.i1 - 1]
+        val state = DEFAULT
+        colors[line.i1] = state
+        return state
     }
 
     override fun toString(): String = "Batch"

@@ -293,6 +293,7 @@ class CLikeLanguage(private val type: CLikeLanguageType) : Language {
             }
         }
 
+        colors[line.i1] = state
         return state
     }
 

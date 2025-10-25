@@ -14,7 +14,6 @@ import me.anno.remtext.Window.window
 import me.anno.remtext.Window.windowHeight
 import me.anno.remtext.Window.windowWidth
 import me.anno.remtext.editing.Cursor
-import me.anno.remtext.editing.Editing
 import me.anno.remtext.editing.Editing.cursorDown
 import me.anno.remtext.editing.Editing.cursorLeft
 import me.anno.remtext.editing.Editing.cursorRight
@@ -25,6 +24,7 @@ import me.anno.remtext.editing.Editing.getSelectedString
 import me.anno.remtext.editing.Editing.highLevelDeleteSelection
 import me.anno.remtext.editing.Editing.highLevelPaste
 import me.anno.remtext.editing.Editing.sameX
+import me.anno.remtext.editing.FormatChange
 import me.anno.remtext.editing.InputMode
 import me.anno.remtext.editing.TextBox
 import me.anno.remtext.font.Font
@@ -89,7 +89,7 @@ object Controls {
                     if (pressed && isControlDown) {
                         when (inputMode) {
                             InputMode.TEXT -> {
-                                cursor0 = Cursor(0, 0)
+                                cursor0 = Cursor.ZERO
                                 val lines = file.lines
                                 val lastLine = lines.lastIndex
                                 cursor1 = Cursor(lastLine, lines[lastLine].i1)
@@ -157,17 +157,15 @@ object Controls {
                 }
                 GLFW_KEY_F -> {
                     if (pressed && isControlDown) {
-                        if (isShiftDown) {
+                        if (isShiftDown && file.finished) {
                             val language = file.language
-                            if(language != null) {
+                            if (language != null) {
                                 val options = AutoFormatOptions.nextOption(file.language)
                                 val newLines = language.format(file.lines, options)
                                 if (newLines != null) {
                                     println("Formatted ${file.file.absolutePath} using $options")
                                     language.colorize(newLines)
-                                    file.lines.clear()
-                                    file.lines.addAll(newLines)
-                                    Editing.onChange()
+                                    file.history.push(FormatChange(newLines))
                                 } else {
                                     println("No valid formatter found!")
                                 }
@@ -192,6 +190,11 @@ object Controls {
                         inputMode = when (inputMode) {
                             InputMode.SEARCH -> InputMode.REPLACE
                             InputMode.REPLACE -> InputMode.SEARCH
+                            InputMode.TEXT -> {
+                                val rem = cursor1.i.and(1)
+                                highLevelPaste(if (rem == 0) "  " else " ")
+                                inputMode
+                            }
                             else -> inputMode
                         }
                     }
@@ -341,8 +344,9 @@ object Controls {
         }
         glfwSetMouseButtonCallback(window) { _, button, action, _ ->
             if (button == GLFW_MOUSE_BUTTON_1) {
-                // todo drag selected text???
+                // todo drag selected text
                 //  ... when a drag starts inside an existing selection...
+
                 isLeftDown = action == GLFW_PRESS
 
                 val scrollY = mouseX - (windowWidth - barWidth)

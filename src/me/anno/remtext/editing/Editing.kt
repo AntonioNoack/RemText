@@ -20,8 +20,7 @@ object Editing {
 
     fun highLevelPaste(added: String) {
         if (!file.finished) return // not ready yet
-
-        file.history.push(Change(added))
+        file.history.push(PasteChange(added))
     }
 
     fun highLevelDeleteSelection() {
@@ -115,18 +114,19 @@ object Editing {
         }
     }
 
+    // todo bug: CSS stays green somehow after placing a multiline-comment and removing it :(
     fun validateColorsInRange(i0: Int, i1: Int = i0 + 1) {
         val hl = file.language ?: return
         val lines = file.lines
         val prevLine = lines.getOrNull(i0 - 1)
-        var state = if (prevLine != null) prevLine.colors!![prevLine.i1 - 1] else Colors.DEFAULT
+        var state = if (prevLine != null) prevLine.colors!![prevLine.i1] else Colors.DEFAULT
         for (i in i0 until i1) {
-            val line = lines.getOrNull(i) ?: break
+            val line = lines.getOrNull(i) ?: return
             state = hl.highlight(line, state)
         }
         // while state != lines[i].colors[i0], validate more lines
         for (i in i1 until lines.size) {
-            val line = lines.getOrNull(i) ?: break
+            val line = lines.getOrNull(i) ?: return
             if (line.i1 > line.i0) {
                 if (state == line.colors!![line.i0]) return // should be done
                 state = hl.highlight(line, state)
@@ -229,7 +229,7 @@ object Editing {
 
     fun getCursorPosition(x: Int, y: Int): Cursor {
         val lineStarts = Rendering.lineStarts
-        if (lineStarts.isEmpty()) return Cursor(0, 0)
+        if (lineStarts.isEmpty()) return Cursor.ZERO
 
         var li = lineStarts.binarySearch { it.y - y }
         if (li < 0) li = -li - 2

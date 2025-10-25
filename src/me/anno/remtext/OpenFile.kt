@@ -17,8 +17,8 @@ class OpenFile(val file: File) {
         const val MAX_FILE_LENGTH = 1_000_000_000
     }
 
-    var cursor0 = Cursor(0, 0)
-    var cursor1 = cursor0
+    var cursor0 = Cursor.ZERO
+    var cursor1 = Cursor.ZERO
 
     val language = Languages.highlighters[file.extension.lowercase()]
 
@@ -53,7 +53,7 @@ class OpenFile(val file: File) {
 
         thread(name = file.name) {
             val offsets = IntArray(text.length + 1)
-            val colors = if (language != null) ByteArray(text.length) else null
+            val colors = if (language != null) ByteArray(text.length + 1) else null
 
             var i0 = 0
             var state = Colors.DEFAULT

@@ -6,4 +6,8 @@ data class Cursor(val lineIndex: Int, val i: Int) : Comparable<Cursor> {
         if (c0 != 0) return c0
         return i.compareTo(other.i)
     }
+
+    companion object {
+        val ZERO = Cursor(0, 0)
+    }
 }

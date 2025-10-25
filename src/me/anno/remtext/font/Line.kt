@@ -12,7 +12,7 @@ class Line(
     constructor(text: String) : this(
         text, 0, text.length,
         IntArray(text.length + 1),
-        ByteArray(text.length),
+        ByteArray(text.length + 1),
     ) {
         fillOffsets(text, i0, i1, offsets)
     }
@@ -80,7 +80,7 @@ class Line(
         validateOffsets(joinedText, 0, joinedText.length, joinedOffset)
         return Line(
             joinedText, 0, joinedText.length, joinedOffset,
-            ByteArray(joinedText.length),
+            ByteArray(joinedText.length + 1),
         )
     }
 
@@ -124,14 +124,14 @@ class Line(
     }
 
     fun indexOf(start: Char, i0: Int, ignoreCase: Boolean = false): Int {
-        for (i in max(i0, this.i0) until i1 - 1) {
+        for (i in max(i0, this.i0) until i1) {
             if (text[i].equals(start, ignoreCase)) return i
         }
         return -1
     }
 
     fun indexOf(start: String, i0: Int, ignoreCase: Boolean = false): Int {
-        for (i in max(i0, this.i0) until i1 - start.length) {
+        for (i in max(i0, this.i0)..i1 - start.length) {
             if (text.startsWith(start, i, ignoreCase)) return i
         }
         return -1

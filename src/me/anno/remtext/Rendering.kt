@@ -1,6 +1,7 @@
 package me.anno.remtext
 
 import me.anno.remtext.Controls.inputMode
+import me.anno.remtext.Controls.isLeftDown
 import me.anno.remtext.Controls.mouseX
 import me.anno.remtext.Controls.mouseY
 import me.anno.remtext.Controls.numHiddenLines
@@ -8,6 +9,8 @@ import me.anno.remtext.Controls.scrollX
 import me.anno.remtext.Controls.scrollY
 import me.anno.remtext.Window.isDarkTheme
 import me.anno.remtext.Window.window
+import me.anno.remtext.Window.windowHeight
+import me.anno.remtext.Window.windowWidth
 import me.anno.remtext.colors.Colors
 import me.anno.remtext.editing.Cursor
 import me.anno.remtext.editing.InputMode
@@ -83,6 +86,26 @@ object Rendering {
         return max(numLines - 1, 0).toLong() * lineHeight
     }
 
+    fun autoScrollOnBorder() {
+        // scroll when cursor is at border & down
+        if (isLeftDown) {
+            val maxScroll = 10
+            if (!file.wrapLines) {
+                val scrollMx = maxScroll - mouseX
+                if (scrollMx > 0) scrollX -= scrollMx
+
+                val scrollPx = maxScroll - (windowWidth - 1 - mouseX)
+                if (scrollPx > 0) scrollX += scrollPx
+            }
+
+            val scrollMy = maxScroll - mouseY
+            if (scrollMy > 0) scrollY -= scrollMy
+
+            val scrollPy = maxScroll - (windowHeight - 1 - mouseY)
+            if (scrollPy > 0) scrollY += scrollPy
+        }
+    }
+
     fun renderWindow() {
 
         val texShader = TextureColorShader()
@@ -106,6 +129,8 @@ object Rendering {
 
             val bgColor = if (isDarkTheme) dark else bright
             val textColor = if (isDarkTheme) bright else dark
+
+            autoScrollOnBorder()
 
             glClearColor(bgColor.r, bgColor.g, bgColor.b, 1f)
             glClear(GL_COLOR_BUFFER_BIT)

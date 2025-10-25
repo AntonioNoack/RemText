@@ -25,7 +25,7 @@ object ShellLanguage : Language {
         if (colors.isEmpty()) return DEFAULT
         var i = line.i0
 
-        loop@ while (i < line.i1) {
+        while (i < line.i1) {
             when {
                 text[i] == '#' -> {
                     // Single-line comment
@@ -81,7 +81,10 @@ object ShellLanguage : Language {
                 else -> i++
             }
         }
-        return colors[line.i1 - 1]
+
+        val state = DEFAULT
+        colors[line.i1] = state
+        return state
     }
 
     override fun toString(): String = "Shell"
