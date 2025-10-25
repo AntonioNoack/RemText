@@ -14,6 +14,7 @@ import me.anno.remtext.Window.window
 import me.anno.remtext.Window.windowHeight
 import me.anno.remtext.Window.windowWidth
 import me.anno.remtext.editing.Cursor
+import me.anno.remtext.editing.Editing
 import me.anno.remtext.editing.Editing.cursorDown
 import me.anno.remtext.editing.Editing.cursorLeft
 import me.anno.remtext.editing.Editing.cursorRight
@@ -29,6 +30,7 @@ import me.anno.remtext.editing.TextBox
 import me.anno.remtext.font.Font
 import me.anno.remtext.font.Font.lineHeight
 import me.anno.remtext.font.Line
+import me.anno.remtext.formatting.AutoFormatOptions
 import org.lwjgl.glfw.GLFW.*
 import java.awt.Toolkit
 import java.awt.datatransfer.DataFlavor
@@ -57,7 +59,7 @@ object Controls {
         glfwSetKeyCallback(window) { _, key, _, action, _ ->
             // action: GLFW_PRESS, GLFW_RELEASE or GLFW_REPEAT
             // key: The keyboard key that was pressed or released.
-            
+
             val pressed = action == GLFW_PRESS
             val typed = pressed || action == GLFW_REPEAT
 
@@ -155,7 +157,20 @@ object Controls {
                 }
                 GLFW_KEY_F -> {
                     if (pressed && isControlDown) {
-                        inputMode = InputMode.SEARCH_ONLY
+                        if (isShiftDown) {
+                            val options = AutoFormatOptions.nextOption(file.language)
+                            val newLines = file.language?.format(file.lines, options)
+                            if (newLines != null && newLines !== file.lines) {
+                                println("Formatted ${file.file.absolutePath} using $options")
+                                file.lines.clear()
+                                file.lines.addAll(newLines)
+                                Editing.onChange()
+                            } else {
+                                println("No valid formatter found!")
+                            }
+                        } else {
+                            inputMode = InputMode.SEARCH_ONLY
+                        }
                     }
                 }
                 GLFW_KEY_R -> {

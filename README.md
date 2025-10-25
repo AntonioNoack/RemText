@@ -24,6 +24,7 @@ Simple, fast text editor, because "TextEditor" on Ubuntu was too slow for me
     - up/down arrow: go to next/previous found item
     - enter: replace item / go to next one
     - tab: switch between search/replace input
+- control-shift-f: autoformat (JSON only at the moment)
 - mouse-drag: select text
 - mouse-click: set cursor
 - mouse-wheel: scroll
@@ -31,8 +32,7 @@ Simple, fast text editor, because "TextEditor" on Ubuntu was too slow for me
 - escape: exit search/replace; exit program
 
 ## Planned Features
-- JSON formatting
-- JSON/YAML highlighting
+- YAML highlighting
 - Markdown highlighting
 - Basic C/Java code highlighting (numbers, keywords, brackets, comments maybe)
 - Save-as-menu?

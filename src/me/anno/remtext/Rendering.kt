@@ -8,12 +8,14 @@ import me.anno.remtext.Controls.scrollX
 import me.anno.remtext.Controls.scrollY
 import me.anno.remtext.Window.isDarkTheme
 import me.anno.remtext.Window.window
+import me.anno.remtext.colors.Colors
 import me.anno.remtext.editing.Cursor
 import me.anno.remtext.editing.InputMode
 import me.anno.remtext.editing.LineStart
 import me.anno.remtext.editing.TextBox
 import me.anno.remtext.font.Font
 import me.anno.remtext.font.Font.lineHeight
+import me.anno.remtext.font.Line
 import me.anno.remtext.gfx.Color
 import me.anno.remtext.gfx.FlatColorShader
 import me.anno.remtext.gfx.Quad
@@ -166,7 +168,7 @@ object Rendering {
                 texShader.use()
             }
 
-            fun onChar(lineIndex: Int, i: Int, x: Int, width: Int) {
+            fun onChar(line: Line, lineIndex: Int, i: Int, x: Int, width: Int) {
                 val isSelected =
                     if (lineIndex in minCursor.lineIndex..maxCursor.lineIndex) {
                         if (lineIndex == minCursor.lineIndex && lineIndex == maxCursor.lineIndex) {
@@ -182,14 +184,18 @@ object Rendering {
                     if (isSelected) {
                         selectionStartX = x
                         selectionStartY = y
-                        color3(texShader.bgColor, textColor)
-                        color3(texShader.textColor, bgColor)
-                    } else {
-                        color3(texShader.textColor, textColor)
-                        color3(texShader.bgColor, bgColor)
                     }
+                    color3(texShader.bgColor, if (isSelected) textColor else bgColor)
                     wasSelected = isSelected
                 }
+
+                val hlColor =
+                    if (isSelected) bgColor
+                    else if (line.colors != null) Colors[line.colors[i]]
+                    else textColor
+
+                color3(texShader.textColor, hlColor)
+
                 if (isSelected) {
                     if (selectionStartY != y) {
                         selectionStartX = x
@@ -225,7 +231,7 @@ object Rendering {
                             val curr = text[i]
                             val x = line.getOffset(i) + lineNumberOffset
                             if (curr == ' ') {
-                                onChar(lineIndex, i, x - dxi, Font.spaceWidth)
+                                onChar(line, lineIndex, i, x - dxi, Font.spaceWidth)
                                 continue
                             }
 
@@ -240,7 +246,7 @@ object Rendering {
 
                             val tex = Font.getTexture(curr)
                             if (y + tex.height > 0) {
-                                onChar(lineIndex, i, x - dxi, tex.width)
+                                onChar(line, lineIndex, i, x - dxi, tex.width)
                                 glBindTexture(GL_TEXTURE_2D, tex.pointer)
                                 drawQuad(texShader.bounds, x - dxi, y, tex.width, tex.height)
                             }
@@ -274,13 +280,13 @@ object Rendering {
                         val x = line.getOffset(i) + dxi
                         if (x >= width) break@line
                         if (curr == ' ') {
-                            onChar(lineIndex, i, x, Font.spaceWidth)
+                            onChar(line, lineIndex, i, x, Font.spaceWidth)
                             continue
                         }
 
                         val tex = Font.getTexture(curr)
                         if (x + tex.width > 0) {
-                            onChar(lineIndex, i, x, tex.width)
+                            onChar(line, lineIndex, i, x, tex.width)
                             glBindTexture(GL_TEXTURE_2D, tex.pointer)
                             drawQuad(texShader.bounds, x, y, tex.width, tex.height)
                         }

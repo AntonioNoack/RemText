@@ -9,6 +9,7 @@ import me.anno.remtext.Rendering.maxI
 import me.anno.remtext.Rendering.minI
 import me.anno.remtext.Window.WINDOW_TITLE
 import me.anno.remtext.Window.window
+import me.anno.remtext.colors.Colors
 import me.anno.remtext.font.Font.lineHeight
 import me.anno.remtext.font.Line
 import org.lwjgl.glfw.GLFW.glfwSetWindowTitle
@@ -55,6 +56,7 @@ object Editing {
             lines.subList(minCursor.lineIndex + 1, maxCursor.lineIndex + 1).clear() // remove remaining lines
         }
 
+        validateColorsInRange(minCursor.lineIndex)
         // then move cursor to the end
         return Cursor(
             minCursor.lineIndex,
@@ -94,18 +96,41 @@ object Editing {
             if (newCursorI1 !in lastNewLine.i0..lastNewLine.i1)
                 throw IllegalStateException("newCursor out of bounds: $newCursorI1 !in ${lastNewLine.i0}-${lastNewLine.i1}")
 
+            validateColorsInRange(cursor.lineIndex, lastNewLineIndex + 1)
             val newCursor0 = Cursor(cursor.lineIndex, cursor.i - oldLine.i0 + firstNewLine.i0)
             val newCursor1 = Cursor(lastNewLineIndex, newCursorI1)
             return newCursor0 to newCursor1
         } else {
+
             val newLine = oldLine.joinRanges(
                 oldLine.i0, cursor.i, text,
                 cursor.i, oldLine.i1, oldLine
             )
             lines[cursor.lineIndex] = newLine
+
+            validateColorsInRange(cursor.lineIndex)
             val newCursor0 = Cursor(cursor.lineIndex, cursor.i - oldLine.i0 + newLine.i0)
             val newCursor1 = Cursor(cursor.lineIndex, newCursor0.i + text.length)
             return newCursor0 to newCursor1
+        }
+    }
+
+    fun validateColorsInRange(i0: Int, i1: Int = i0 + 1) {
+        val hl = file.language ?: return
+        val lines = file.lines
+        val prevLine = lines.getOrNull(i0 - 1)
+        var state = if (prevLine != null) prevLine.colors!![prevLine.i1 - 1] else Colors.DEFAULT
+        for (i in i0 until i1) {
+            val line = lines.getOrNull(i) ?: break
+            state = hl.highlight(line, state)
+        }
+        // while state != lines[i].colors[i0], validate more lines
+        for (i in i1 until lines.size) {
+            val line = lines.getOrNull(i) ?: break
+            if (line.i1 > line.i0) {
+                if (state == line.colors!![line.i0]) return // should be done
+                state = hl.highlight(line, state)
+            }
         }
     }
 

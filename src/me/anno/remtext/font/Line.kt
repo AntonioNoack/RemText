@@ -1,13 +1,12 @@
 package me.anno.remtext.font
 
-import me.anno.remtext.colors.Highlighter
 import kotlin.math.max
 import kotlin.math.min
 
 class Line(
     val text: String, val i0: Int, val i1: Int,
     private val offsets: IntArray,
-    val colors: ByteArray,
+    val colors: ByteArray?,
 ) {
 
     constructor(text: String) : this(
@@ -124,14 +123,14 @@ class Line(
         return numLines
     }
 
-    fun indexOf(start: Char, i0: Int, ignoreCase: Boolean): Int {
+    fun indexOf(start: Char, i0: Int, ignoreCase: Boolean = false): Int {
         for (i in max(i0, this.i0) until i1 - 1) {
             if (text[i].equals(start, ignoreCase)) return i
         }
         return -1
     }
 
-    fun indexOf(start: String, i0: Int, ignoreCase: Boolean): Int {
+    fun indexOf(start: String, i0: Int, ignoreCase: Boolean = false): Int {
         for (i in max(i0, this.i0) until i1 - start.length) {
             if (text.startsWith(start, i, ignoreCase)) return i
         }

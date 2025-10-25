@@ -2,7 +2,7 @@ package me.anno.remtext
 
 import me.anno.remtext.Rendering.countedLinesW
 import me.anno.remtext.colors.Colors
-import me.anno.remtext.colors.HighlighterLib
+import me.anno.remtext.colors.Languages
 import me.anno.remtext.editing.Cursor
 import me.anno.remtext.editing.History
 import me.anno.remtext.font.Line
@@ -20,7 +20,11 @@ class OpenFile(val file: File) {
     var cursor0 = Cursor(0, 0)
     var cursor1 = cursor0
 
-    val highlighter = HighlighterLib.highlighters[file.extension.lowercase()]
+    val language = Languages.highlighters[file.extension.lowercase()]
+
+    init {
+        println("Language for ${file.extension.lowercase()}: $language")
+    }
 
     val lines = ArrayList<Line>()
     val history = History()
@@ -49,7 +53,7 @@ class OpenFile(val file: File) {
 
         thread(name = file.name) {
             val offsets = IntArray(text.length + 1)
-            val colors = ByteArray(text.length)
+            val colors = if (language != null) ByteArray(text.length) else null
 
             var i0 = 0
             var state = Colors.DEFAULT
@@ -63,9 +67,8 @@ class OpenFile(val file: File) {
                 fillOffsets(text, i0, i1, offsets)
 
                 val line = Line(text, i0, i1, offsets, colors)
-                if (i1 > i0) {
-                    highlighter?.highlight(line, state)
-                    state = line.colors[line.i1 - 1]
+                if (language != null) {
+                    state = language.highlight(line, state)
                 }
 
                 lines.add(line)

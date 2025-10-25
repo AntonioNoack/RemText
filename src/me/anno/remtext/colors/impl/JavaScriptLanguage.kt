@@ -1,5 +1,6 @@
-package me.anno.remtext.colors
+package me.anno.remtext.colors.impl
 
+import me.anno.remtext.colors.Colors
 import me.anno.remtext.colors.Colors.BRACKET
 import me.anno.remtext.colors.Colors.COMMENT
 import me.anno.remtext.colors.Colors.DEFAULT
@@ -9,9 +10,12 @@ import me.anno.remtext.colors.Colors.ML_STRING
 import me.anno.remtext.colors.Colors.NUMBER
 import me.anno.remtext.colors.Colors.STRING
 import me.anno.remtext.colors.Colors.SYMBOL
+import me.anno.remtext.colors.Language
 import me.anno.remtext.font.Line
+import me.anno.remtext.formatting.AutoFormatOptions
+import me.anno.remtext.formatting.JsonFormatter
 
-class JsonHighlighter(val isJavaScript: Boolean) : Highlighter {
+class JavaScriptLanguage(val isJavaScriptNotJSON: Boolean) : Language {
 
     companion object {
         val keywords = ("abstract,arguments,async,await,boolean,break,byte,case,catch,char,class,const," +
@@ -26,18 +30,20 @@ class JsonHighlighter(val isJavaScript: Boolean) : Highlighter {
         return char.isLetterOrDigit() || char in "_$"
     }
 
-    override fun highlight(line: Line, state0: Byte) {
+    override fun highlight(line: Line, state0: Byte): Byte {
 
         var state = if (state0 == ML_COMMENT || state0 == ML_STRING) state0 else DEFAULT
 
         val text = line.text
-        val colors = line.colors
+        val colors = line.colors ?: return state
+        if (colors.isEmpty()) return state
+
         var i = line.i0
 
         loop@ while (i < line.i1) {
             when (state) {
                 DEFAULT -> {
-                    if (isJavaScript) {
+                    if (isJavaScriptNotJSON) {
                         val keywords = keywords[text[i].lowercaseChar()] ?: emptyList()
                         val keyword = keywords.firstOrNull { keyword -> text.startsWith(keyword, i) }
                         if (keyword != null && (
@@ -146,6 +152,8 @@ class JsonHighlighter(val isJavaScript: Boolean) : Highlighter {
                 else -> i++
             }
         }
+
+        return colors[line.i1 - 1]
     }
 
     private fun findEndOfString(line: Line, i: Int, symbol: Char): Int {
@@ -196,6 +204,15 @@ class JsonHighlighter(val isJavaScript: Boolean) : Highlighter {
             while (j < line.i1 && text[j] in '0'..'9') j++
         }
         return j
+    }
+
+    override fun format(lines: List<Line>, options: AutoFormatOptions): List<Line> {
+        return if (isJavaScriptNotJSON) lines
+        else JsonFormatter.format(lines, options.indentation, options.lineBreakLength).colorize()
+    }
+
+    override fun toString(): String {
+        return if (isJavaScriptNotJSON) "JS" else "JSON"
     }
 
 }
