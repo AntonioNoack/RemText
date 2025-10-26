@@ -5,7 +5,6 @@ import me.anno.remtext.Rendering.gfxCheck
 import org.lwjgl.glfw.GLFW.*
 import org.lwjgl.glfw.GLFWImage
 import org.lwjgl.opengl.GL
-import java.awt.MouseInfo
 import java.io.File
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
@@ -38,16 +37,9 @@ object Window {
         glfwWindowHintString(GLFW_X11_CLASS_NAME, appName)
         glfwWindowHintString(GLFW_X11_INSTANCE_NAME, appName)
 
-        val width = 800
-        val height = 600
-        window = glfwCreateWindow(width, height, "LWJGL Quad Example", NULL, NULL)
+        window = glfwCreateWindow(800, 600, "LWJGL Quad Example", NULL, NULL)
         if (window == NULL) error("Failed to create GLFW window")
 
-        // Center the window at cursor
-        val mouse0 = MouseInfo.getPointerInfo().location
-        val windowX = mouse0.x - width.shr(1)
-        val windowY = mouse0.y - height.shr(1)
-        glfwSetWindowPos(window, windowX, windowY)
         glfwSetWindowTitle(window, "$WINDOW_TITLE - ${file.file.name}")
         // todo execute the setIcon() function if on Windows
         if (false) setIcon()

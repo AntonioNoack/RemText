@@ -37,7 +37,7 @@ class CLikeLanguage(private val type: CLikeLanguageType) : Language {
             return line.i1
         }
 
-        private fun isHexChar(c: Char) = c in '0'..'9' || c in 'A'..'F' || c in 'a'..'f'
+        fun isHexChar(c: Char) = c in '0'..'9' || c in 'A'..'F' || c in 'a'..'f'
 
         fun findEndOfNumber(line: Line, start: Int): Int {
             val text = line.text

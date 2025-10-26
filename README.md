@@ -1,9 +1,18 @@
 # RemText
 
-Simple, fast text editor, because "TextEditor" on Ubuntu was too slow for me
+Simple, fast text editor, because "TextEditor" on Ubuntu was too slow for me.
+Supports auto-formatting for JSON and XML.
 
 ![Promo.png](promo/Promo.png)
 *I had a 4MB single-line JSON file, and it would lag horribly for no apparent reason
+
+Supports basic syntax highlighting for
+- C, C++, Rust, Zig, Go,
+- C#, Java, Kotlin, Swift,
+- JavaScript, HTML, CSS, PHP,
+- JSON, YAML, XML,
+- Shell,
+- GLSL, HLSL.
 
 ## Controls
 - F1: toggle light/dark theme
@@ -32,18 +41,16 @@ Simple, fast text editor, because "TextEditor" on Ubuntu was too slow for me
 - escape: exit search/replace; exit program
 
 ## Planned Features
-- YAML highlighting
 - Markdown highlighting
-- Basic C/Java code highlighting (numbers, keywords, brackets, comments maybe)
 - Save-as-menu?
 - New-file-menu?
-- HexEdit-Mode?
 - Rendering unknown symbols as hex-code
 
 ## Not-yet Planned
 - Emojis
 - Custom Fonts
 - Custom Themes
+- HexEdit-Mode
 
 ## OS-Support
 This implementation uses OpenGL 3.3, but could be easily switched with Java AWT if needed.

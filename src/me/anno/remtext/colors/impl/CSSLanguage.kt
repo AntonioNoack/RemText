@@ -8,6 +8,7 @@ import me.anno.remtext.colors.Colors.STRING
 import me.anno.remtext.colors.Colors.SYMBOL
 import me.anno.remtext.colors.Colors.VARIABLE
 import me.anno.remtext.colors.Language
+import me.anno.remtext.colors.impl.CLikeLanguage.Companion.isHexChar
 import me.anno.remtext.font.Line
 
 object CSSLanguage : Language {
@@ -43,7 +44,7 @@ object CSSLanguage : Language {
     private fun findEndOfColor(line: Line, start: Int): Int {
         val text = line.text
         var i = start + 1
-        while (i < line.i1 && (text[i].isDigit() || text[i].lowercaseChar() in 'a'..'f')) i++
+        while (i < line.i1 && isHexChar(text[i])) i++
         return i
     }
 
@@ -78,8 +79,7 @@ object CSSLanguage : Language {
                             i = end
                         }
                         // Color codes starting with #
-                        text[i] == '#' && i + 1 < line.i1 &&
-                                (text[i + 1].isDigit() || text[i + 1].lowercaseChar() in 'a'..'f') -> {
+                        text[i] == '#' && i + 1 < line.i1 && isHexChar(text[i + 1]) -> {
 
                             // not ideal...
                             val i0 = line.indexOf(';', i).let { if (it < 0) line.i1 else it }
