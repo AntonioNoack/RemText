@@ -5,8 +5,10 @@ import me.anno.remtext.Rendering.blink0
 import me.anno.remtext.Rendering.cursor0
 import me.anno.remtext.Rendering.cursor1
 import me.anno.remtext.Rendering.file
+import me.anno.remtext.Rendering.maxI
 import me.anno.remtext.Rendering.maxScrollX
 import me.anno.remtext.Rendering.maxScrollY
+import me.anno.remtext.Rendering.minI
 import me.anno.remtext.Window.WINDOW_TITLE
 import me.anno.remtext.Window.isDarkTheme
 import me.anno.remtext.Window.lightThemeFile
@@ -18,6 +20,7 @@ import me.anno.remtext.editing.Editing.cursorDown
 import me.anno.remtext.editing.Editing.cursorLeft
 import me.anno.remtext.editing.Editing.cursorRight
 import me.anno.remtext.editing.Editing.cursorUp
+import me.anno.remtext.editing.Editing.findLineAt
 import me.anno.remtext.editing.Editing.getCursorPosition
 import me.anno.remtext.editing.Editing.getFullString
 import me.anno.remtext.editing.Editing.getSelectedString
@@ -191,8 +194,9 @@ object Controls {
                             InputMode.SEARCH -> InputMode.REPLACE
                             InputMode.REPLACE -> InputMode.SEARCH
                             InputMode.TEXT -> {
-                                val rem = cursor1.i.and(1)
-                                highLevelPaste(if (rem == 0) "  " else " ")
+                                val n = 4 - cursor1.i.and(3)
+                                val added = " ".repeat(n)
+                                highLevelPaste(added)
                                 inputMode
                             }
                             else -> inputMode
@@ -330,6 +334,7 @@ object Controls {
             when {
                 isDraggingX -> dragX()
                 isDraggingY -> dragY()
+                isDraggingText -> draggingCursor = getCursorPosition(xi, yi)
                 isLeftDown -> {
                     blink0 = System.nanoTime()
                     if (leftDownLine < numHiddenLines) {
@@ -349,10 +354,10 @@ object Controls {
 
                 isLeftDown = action == GLFW_PRESS
 
-                val scrollY = mouseX - (windowWidth - barWidth)
-                val scrollX = mouseY - (windowHeight - barWidth)
-                isDraggingX = isLeftDown && scrollX >= 0 && scrollX > scrollY
-                isDraggingY = isLeftDown && !isDraggingX && scrollY >= 0
+                val isOnYScrollbar = mouseX - (windowWidth - barWidth)
+                val isOnXScrollbar = mouseY - (windowHeight - barWidth)
+                isDraggingX = isLeftDown && !file.wrapLines && isOnXScrollbar >= 0 && isOnXScrollbar > isOnYScrollbar
+                isDraggingY = isLeftDown && !isDraggingX && isOnYScrollbar >= 0
 
                 when {
                     isDraggingX -> dragX()
@@ -367,22 +372,75 @@ object Controls {
                             if (inputMode != InputMode.SEARCH_ONLY) {
                                 inputMode = if (lineIndex == 0) InputMode.SEARCH else InputMode.REPLACE
                             }
+                        } else if (isInsideSelection()) {
+                            inputMode = InputMode.TEXT // just in case
+                            isDraggingText = true
+                            draggingCursor = getCursorPosition(mouseX, mouseY)
                         } else {
-                            blink0 = System.nanoTime()
-                            cursor0 = getCursorPosition(mouseX, mouseY)
-                            cursor1 = cursor0
+                            inputMode = InputMode.TEXT // just in case
+                            setCursorByMouse()
+                        }
+                    }
+                    isDraggingText -> {
+                        isDraggingText = false
+                        inputMode = InputMode.TEXT // just in case
+                        if (!mouseHasMoved || isInsideSelection()) {
+                            setCursorByMouse()
+                        } else {
+                            val pastePosition = getCursorPosition(mouseX, mouseY)
+                            val selected = getSelectedString()
+                            if (selected.isNotEmpty()) {
+                                highLevelDeleteSelection()
+                                cursor0 = pastePosition
+                                cursor1 = pastePosition
+                                highLevelPaste(selected)
+                            }
                         }
                     }
                 }
 
-                val now = System.nanoTime()
-                if (!isLeftDown && movedSinceLeftPress < 10f && now - downTime < 500_000_000L) {
-                    // a click
-                }
-                downTime = now
                 movedSinceLeftPress = 0f
             }
         }
+    }
+
+    val mouseHasMoved get() = movedSinceLeftPress >= 10f
+
+    fun setCursorByMouse() {
+        blink0 = System.nanoTime()
+        cursor0 = getCursorPosition(mouseX, mouseY)
+        cursor1 = cursor0
+    }
+
+    var draggingCursor: Cursor = Cursor.ZERO
+    var isDraggingText = false
+
+    fun isInsideSelection(): Boolean {
+        val lineStart = findLineAt(mouseY) ?: return false
+        val minCursor = minI(cursor0, cursor1)
+        val maxCursor = maxI(cursor0, cursor1)
+        if (lineStart.lineIndex < minCursor.lineIndex || lineStart.lineIndex > maxCursor.lineIndex) {
+            return false
+        }
+
+        val cursor = getCursorPosition(mouseX, lineStart)
+        if (cursor !in minCursor..<maxCursor) {
+            return false
+        }
+
+        val line = file.lines[lineStart.lineIndex]
+        if (line.i0 == line.i1) return false // empty line
+
+        val firstOffset = line.getOffset(lineStart.i)
+        val searched = (mouseX - lineStart.whereIIsDrawnX + firstOffset)
+        if (searched <= 0) return false // too far left
+        // could be a binary search, but it doesn't matter, because this will be at max width/charWidth
+        for (i in lineStart.i until line.i1) {
+            val xi = line.getOffset(i)
+            if (xi >= searched) return true
+        }
+        // end -> too far right included
+        return false
     }
 
     fun dragX() {
@@ -405,7 +463,6 @@ object Controls {
     var leftDownLine = 0
 
     var movedSinceLeftPress = 0f
-    var downTime = 0L
 
     var inputMode = InputMode.TEXT
 

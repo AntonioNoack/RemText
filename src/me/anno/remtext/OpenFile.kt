@@ -30,6 +30,7 @@ class OpenFile(val file: File) {
     val history = History()
 
     var wrapLines = true
+
     var finished = false
     var modified = false
 

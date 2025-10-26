@@ -228,14 +228,11 @@ object Editing {
     }
 
     fun getCursorPosition(x: Int, y: Int): Cursor {
-        val lineStarts = Rendering.lineStarts
-        if (lineStarts.isEmpty()) return Cursor.ZERO
+        val lineStart = findLineAt(y) ?: return Cursor.ZERO
+        return getCursorPosition(x, lineStart)
+    }
 
-        var li = lineStarts.binarySearch { it.y - y }
-        if (li < 0) li = -li - 2
-        li = min(max(li, 0), lineStarts.lastIndex)
-
-        val lineStart = lineStarts[li]
+    fun getCursorPosition(x: Int, lineStart: LineStart): Cursor {
         val line = file.lines[lineStart.lineIndex]
 
         val firstOffset = line.getOffset(lineStart.i)
@@ -247,6 +244,17 @@ object Editing {
             if (x0 + x1 >= searched) return Cursor(lineStart.lineIndex, i)
         }
         return Cursor(lineStart.lineIndex, line.i1)
+    }
+
+    fun findLineAt(y: Int): LineStart? {
+        val lineStarts = Rendering.lineStarts
+        if (lineStarts.isEmpty()) return null
+
+        var li = lineStarts.binarySearch { it.y - y }
+        if (li < 0) li = -li - 2
+        li = min(max(li, 0), lineStarts.lastIndex)
+
+        return lineStarts[li]
     }
 
 }

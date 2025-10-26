@@ -1,7 +1,10 @@
 package me.anno.remtext
 
+import me.anno.remtext.Controls.draggingCursor
 import me.anno.remtext.Controls.inputMode
+import me.anno.remtext.Controls.isDraggingText
 import me.anno.remtext.Controls.isLeftDown
+import me.anno.remtext.Controls.mouseHasMoved
 import me.anno.remtext.Controls.mouseX
 import me.anno.remtext.Controls.mouseY
 import me.anno.remtext.Controls.numHiddenLines
@@ -124,8 +127,8 @@ object Rendering {
             val height = heightI[0]
             glBindFramebuffer(GL_FRAMEBUFFER, 0)
             glViewport(0, 0, width, height)
-            Window.windowWidth = width
-            Window.windowHeight = height
+            windowWidth = width
+            windowHeight = height
 
             val bgColor = if (isDarkTheme) dark else bright
             val textColor = if (isDarkTheme) bright else dark
@@ -141,6 +144,7 @@ object Rendering {
 
             val showCursor0 = ((System.nanoTime() - blink0) / 500_000_000L).and(1) == 0L
             val showCursor = showCursor0 && inputMode == InputMode.TEXT && cursor0 == cursor1
+            val showDraggingCursor = isDraggingText && mouseHasMoved
 
             flatShader.use()
             color4(flatShader.color, textColor, 1f)
@@ -234,6 +238,12 @@ object Rendering {
                     i == cursor1.i
                 ) {
                     drawCursor(x, y.toInt())
+                } else if (
+                    showDraggingCursor &&
+                    lineIndex == draggingCursor.lineIndex &&
+                    i == draggingCursor.i
+                ) {
+                    drawCursor(x, y.toInt())
                 }
             }
 
@@ -278,7 +288,10 @@ object Rendering {
                             }
                         }
 
-                        if (showCursor && y + lineHeight >= minY0 && y < height && lineIndex == cursor0.lineIndex && cursor0.i >= line.i1) {
+                        if (y + lineHeight >= minY0 && y < height &&
+                            ((showCursor && lineIndex == cursor0.lineIndex && cursor0.i >= line.i1) ||
+                                    (showDraggingCursor && lineIndex == draggingCursor.lineIndex && draggingCursor.i >= line.i1))
+                        ) {
                             val x = line.getOffset(line.i1) + lineNumberOffset - dxi
                             drawCursor(x, y.toInt())
                         }
@@ -318,7 +331,10 @@ object Rendering {
                         }
                     }
 
-                    if (showCursor && y + lineHeight >= minY0 && y < height && lineIndex == cursor0.lineIndex && cursor0.i >= line.i1) {
+                    if (y + lineHeight >= minY0 && y < height &&
+                        ((showCursor && lineIndex == cursor0.lineIndex && cursor0.i >= line.i1) ||
+                                (showDraggingCursor && lineIndex == draggingCursor.lineIndex && draggingCursor.i >= line.i1))
+                    ) {
                         val x = line.getOffset(line.i1) + lineNumberOffset
                         drawCursor(x, y.toInt())
                     }

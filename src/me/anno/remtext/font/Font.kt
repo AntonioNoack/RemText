@@ -32,6 +32,8 @@ object Font {
         private set
     var spaceWidth: Int = 6
         private set
+    var spacingWidth: Int = 6
+        private set
 
     init {
         calculateBaseSizes()
@@ -43,6 +45,7 @@ object Font {
         lineHeight = (exampleLayout.ascent + exampleLayout.descent).toInt()
         val xLength = max(len(charArrayOf('o')).toFloat(), 1f)
         spaceWidth = (min(xLength, awtFont.size.toFloat()) * 0.667f).toInt()
+        spacingWidth = (xLength * 1.33f).toInt()
     }
 
     fun getTexture(char: Char): Texture {
