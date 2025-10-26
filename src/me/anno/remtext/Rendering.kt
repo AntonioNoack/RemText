@@ -10,6 +10,8 @@ import me.anno.remtext.Controls.mouseY
 import me.anno.remtext.Controls.numHiddenLines
 import me.anno.remtext.Controls.scrollX
 import me.anno.remtext.Controls.scrollY
+import me.anno.remtext.Controls.searchResults
+import me.anno.remtext.Controls.searched
 import me.anno.remtext.Window.isDarkTheme
 import me.anno.remtext.Window.window
 import me.anno.remtext.Window.windowHeight
@@ -37,7 +39,11 @@ object Rendering {
     lateinit var file: OpenFile
 
     val bright = Color(0.9f, 0.9f, 0.9f)
+    val brightSr = Color(0.75f, 0.75f, 0.9f)
+
     val dark = Color(0.1f, 0.1f, 0.15f)
+    val darkSr = Color(0.3f, 0.3f, 0.37f)
+
     val middle = Color(0.5f, 0.5f, 0.6f)
 
     // for each visible line, add an entry here
@@ -131,6 +137,7 @@ object Rendering {
             windowHeight = height
 
             val bgColor = if (isDarkTheme) dark else bright
+            val srBgColor = if(isDarkTheme) darkSr else brightSr
             val textColor = if (isDarkTheme) bright else dark
 
             autoScrollOnBorder()
@@ -176,12 +183,12 @@ object Rendering {
             var y = -scrollY + numHiddenLines * lineHeight
             val minY0 = numHiddenLines * lineHeight - 5 // -5, so arrow-up works
 
-            var selectionStartX = lineNumberOffset
-            var selectionStartY = 0L
+            var lastCharX = lineNumberOffset
+            var lastCharY = 0L
 
-            // todo faintly show all search results...
-            //  it could be lots and lots...
-            //  -> binary search over them, and only show what's visible
+            val searchResults = searchResults
+            var nextSearchIndex = searchResults.size
+            val searchedLength = searched.text.length
 
             fun drawCursor(x0: Int, y: Int) {
                 flatShader.use()
@@ -192,59 +199,84 @@ object Rendering {
             }
 
             var wasSelected = false
-            fun fillSelectionBg(x: Int) {
+            fun fillSelectionBg(x: Int, color: Color) {
                 flatShader.use()
-                drawQuad(flatShader.bounds, selectionStartX, y, x - selectionStartX, lineHeight)
+                color4(flatShader.color, color, 1f)
+                drawQuad(flatShader.bounds, lastCharX, y, x - lastCharX, lineHeight)
                 texShader.use()
             }
 
-            fun onChar(line: Line, lineIndex: Int, i: Int, x: Int, width: Int) {
-                val isSelected =
-                    if (lineIndex in minCursor.lineIndex..maxCursor.lineIndex) {
-                        if (lineIndex == minCursor.lineIndex && lineIndex == maxCursor.lineIndex) {
-                            i in minCursor.i until maxCursor.i
-                        } else if (lineIndex == minCursor.lineIndex) {
-                            i >= minCursor.i
-                        } else if (lineIndex == maxCursor.lineIndex) {
-                            i < maxCursor.i
-                        } else true // in-between
-                    } else false
+            fun isSelected(lineIndex: Int, i: Int): Boolean {
+                return if (lineIndex in minCursor.lineIndex..maxCursor.lineIndex) {
+                    if (lineIndex == minCursor.lineIndex && lineIndex == maxCursor.lineIndex) {
+                        i in minCursor.i until maxCursor.i
+                    } else if (lineIndex == minCursor.lineIndex) {
+                        i >= minCursor.i
+                    } else if (lineIndex == maxCursor.lineIndex) {
+                        i < maxCursor.i
+                    } else true // in-between
+                } else false
+            }
 
+            fun onChar(line: Line, lineIndex: Int, i: Int, x: Int, width: Int) {
+                val isSelected = isSelected(lineIndex, i)
                 if (isSelected != wasSelected) {
                     if (isSelected) {
-                        selectionStartX = x
-                        selectionStartY = y
+                        lastCharX = x
+                        lastCharY = y
                     }
-                    color3(texShader.bgColor, if (isSelected) textColor else bgColor)
                     wasSelected = isSelected
                 }
 
-                val hlColor =
+                val sr = searchResults.getOrNull(nextSearchIndex)
+                val isSearchResult = sr != null && sr.lineIndex == lineIndex
+                        && i in sr.i until sr.i + searchedLength
+
+                val textColorI =
                     if (isSelected) bgColor
                     else if (line.colors != null) Colors[line.colors[i]]
                     else textColor
 
-                color3(texShader.textColor, hlColor)
+                val bgColorI =
+                    if (isSelected) textColor
+                    else if (isSearchResult) srBgColor
+                    else bgColor
+
+                color3(texShader.bgColor, bgColorI)
+                color3(texShader.textColor, textColorI)
+
+                if (sr != null && i >= sr.i + searchedLength) {
+                    nextSearchIndex++
+                }
+
+                if (lastCharY != y) {
+                    lastCharX = x
+                    lastCharY = y
+                }
 
                 if (isSelected) {
-                    if (selectionStartY != y) {
-                        selectionStartX = x
-                        selectionStartY = y
+                    fillSelectionBg(x + width, bgColorI)
+                } else {
+
+                    if (isSearchResult) {
+                        fillSelectionBg(x + width, bgColorI)
                     }
-                    fillSelectionBg(x + width)
-                    selectionStartX = x + width
-                } else if (showCursor &&
-                    lineIndex == cursor0.lineIndex &&
-                    i == cursor1.i
-                ) {
-                    drawCursor(x, y.toInt())
-                } else if (
-                    showDraggingCursor &&
-                    lineIndex == draggingCursor.lineIndex &&
-                    i == draggingCursor.i
-                ) {
-                    drawCursor(x, y.toInt())
+
+                    if (showCursor &&
+                        lineIndex == cursor0.lineIndex &&
+                        i == cursor1.i
+                    ) {
+                        drawCursor(x, y.toInt())
+                    } else if (
+                        showDraggingCursor &&
+                        lineIndex == draggingCursor.lineIndex &&
+                        i == draggingCursor.i
+                    ) {
+                        drawCursor(x, y.toInt())
+                    }
                 }
+
+                lastCharX = x + width
             }
 
             lines@ for (lineIndex in lines.indices) {
@@ -260,6 +292,7 @@ object Rendering {
                     if (y < height && y + drawnHeight >= minY0) {
 
                         lineStarts.add(LineStart(line.i0, lineIndex, lineNumberOffset, y.toInt()))
+                        nextSearchIndex = findNextSearchIndex(lineIndex, line.i0)
 
                         // draw text
                         var dxi = 0
@@ -313,6 +346,8 @@ object Rendering {
                     }
                     if (i0 < 0) i0 = -i0 - 2
                     i0 = line.i0 + max(0, i0)
+
+                    nextSearchIndex = findNextSearchIndex(lineIndex, i0)
 
                     line@ for (i in i0 until line.i1) {
                         val curr = text[i]
@@ -413,7 +448,7 @@ object Rendering {
                 color4(flatShader.color, bgColor, 1f)
                 drawQuad(flatShader.bounds, 0, 0, width, lineHeight)
 
-                drawText(Controls.searched, 0, 0, "Search: ")
+                drawText(searched, 0, 0, "Search: ")
 
                 val numResults = Controls.searchResults.size
                 val index = min(Controls.shownSearchResult + 1, numResults)
@@ -453,6 +488,16 @@ object Rendering {
         quad.destroy()
         glfwDestroyWindow(window)
         glfwTerminate()
+    }
+
+    private fun findNextSearchIndex(lineIndex: Int, i: Int): Int {
+        val searchResults = searchResults
+        val searched = Cursor(lineIndex, i)
+        var index = binarySearch(0, searchResults.lastIndex) { idx ->
+            searchResults[idx].compareTo(searched)
+        }
+        if (index < 0) index = max(-index - 1, 0)
+        return index
     }
 
     private fun drawLineNumber(
