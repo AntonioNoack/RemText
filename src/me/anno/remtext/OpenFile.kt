@@ -2,6 +2,7 @@ package me.anno.remtext
 
 import me.anno.remtext.Rendering.countedLinesW
 import me.anno.remtext.colors.Colors
+import me.anno.remtext.colors.Colors.DEFAULT
 import me.anno.remtext.colors.Languages
 import me.anno.remtext.editing.Cursor
 import me.anno.remtext.editing.History
@@ -69,6 +70,7 @@ class OpenFile(val file: File) {
 
                 val line = Line(text, i0, i1, offsets, colors)
                 if (language != null) {
+                    colors!!.fill(DEFAULT, i0, i1 + 1)
                     state = language.highlight(line, state)
                 }
 

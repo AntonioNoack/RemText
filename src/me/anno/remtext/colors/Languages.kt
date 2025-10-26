@@ -27,6 +27,7 @@ object Languages {
         highlighters["bat"] = BatchLanguage
         highlighters["css"] = CSSLanguage
         highlighters["yml"] = YAMLLanguage
+        highlighters["csv"] = CSVLanguage
         highlighters["md"] = MarkdownLanguage
         alias("yml", "yaml")
         alias("js", "javascript")

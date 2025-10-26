@@ -137,8 +137,7 @@ object Controls {
                 }
                 GLFW_KEY_V -> {
                     if (pressed && isControlDown && file.finished) {
-                        val clipboard = Toolkit.getDefaultToolkit().systemClipboard
-                        val toPaste = clipboard.getData(DataFlavor.stringFlavor).toString()
+                        val toPaste = getClipboardString()
                         when (inputMode) {
                             InputMode.TEXT -> highLevelPaste(toPaste)
                             InputMode.SEARCH, InputMode.SEARCH_ONLY -> {
@@ -201,16 +200,6 @@ object Controls {
                             }
                             else -> inputMode
                         }
-                    }
-                }
-                GLFW_KEY_N -> {
-                    if (pressed && isControlDown) {
-                        // todo create a new file
-                    }
-                }
-                GLFW_KEY_O -> {
-                    if (pressed && isControlDown) {
-                        // todo open a file...
                     }
                 }
                 GLFW_KEY_Z, GLFW_KEY_Y -> {
@@ -349,8 +338,6 @@ object Controls {
         }
         glfwSetMouseButtonCallback(window) { _, button, action, _ ->
             if (button == GLFW_MOUSE_BUTTON_1) {
-                // todo drag selected text
-                //  ... when a drag starts inside an existing selection...
 
                 isLeftDown = action == GLFW_PRESS
 
@@ -402,6 +389,12 @@ object Controls {
                 movedSinceLeftPress = 0f
             }
         }
+    }
+
+    fun getClipboardString(): String {
+        val clipboard = Toolkit.getDefaultToolkit().systemClipboard
+        return clipboard.getData(DataFlavor.stringFlavor).toString()
+            .replace("\r", "")
     }
 
     val mouseHasMoved get() = movedSinceLeftPress >= 10f
@@ -501,8 +494,6 @@ object Controls {
     }
 
     fun replaceSearchResult(cursor: Cursor) {
-        // todo is this working 100% correctly?? paste might make issues
-        //  recalculating would be the easy, but potentially expensive way
         showSearchResult(cursor)
         highLevelPaste(replaced.text)
         val tmp = ArrayList<Cursor>(searchResults)

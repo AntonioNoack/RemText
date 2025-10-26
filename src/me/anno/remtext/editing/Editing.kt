@@ -9,7 +9,7 @@ import me.anno.remtext.Rendering.maxI
 import me.anno.remtext.Rendering.minI
 import me.anno.remtext.Window.WINDOW_TITLE
 import me.anno.remtext.Window.window
-import me.anno.remtext.colors.Colors
+import me.anno.remtext.colors.Colors.DEFAULT
 import me.anno.remtext.font.Font.lineHeight
 import me.anno.remtext.font.Line
 import org.lwjgl.glfw.GLFW.glfwSetWindowTitle
@@ -114,21 +114,24 @@ object Editing {
         }
     }
 
-    // todo bug: CSS stays green somehow after placing a multiline-comment and removing it :(
     fun validateColorsInRange(i0: Int, i1: Int = i0 + 1) {
         val hl = file.language ?: return
         val lines = file.lines
         val prevLine = lines.getOrNull(i0 - 1)
-        var state = if (prevLine != null) prevLine.colors!![prevLine.i1] else Colors.DEFAULT
+        var state = if (prevLine != null) prevLine.colors!![prevLine.i1] else DEFAULT
         for (i in i0 until i1) {
             val line = lines.getOrNull(i) ?: return
+            val lineColors = line.colors ?: continue
+            lineColors.fill(DEFAULT, line.i0, line.i1 + 1)
             state = hl.highlight(line, state)
         }
         // while state != lines[i].colors[i0], validate more lines
         for (i in i1 until lines.size) {
             val line = lines.getOrNull(i) ?: return
             if (line.i1 > line.i0) {
-                if (state == line.colors!![line.i0]) return // should be done
+                val lineColors = line.colors ?: continue
+                if (state == lineColors[line.i0]) return // should be done
+                lineColors.fill(DEFAULT, line.i0, line.i1 + 1)
                 state = hl.highlight(line, state)
             }
         }

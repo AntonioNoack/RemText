@@ -160,7 +160,7 @@ class CLikeLanguage(private val type: CLikeLanguageType) : Language {
                     // --- Comments ---
                     when {
                         line.startsWith("/**", i) -> {
-                            val end = line.indexOf("*/", i + 3, false)
+                            val end = line.indexOf("*/", i + 2, false)
                             if (end >= 0) {
                                 colors.fill(DOC_COMMENT, i, end + 2)
                                 i = end + 2

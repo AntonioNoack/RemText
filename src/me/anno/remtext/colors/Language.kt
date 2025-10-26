@@ -1,5 +1,6 @@
 package me.anno.remtext.colors
 
+import me.anno.remtext.colors.Colors.DEFAULT
 import me.anno.remtext.font.Line
 import me.anno.remtext.formatting.AutoFormatOptions
 
@@ -8,9 +9,12 @@ interface Language {
     fun format(lines: List<Line>, options: AutoFormatOptions): List<Line>? = null
 
     fun colorize(lines: List<Line>) {
-        var state = Colors.DEFAULT
+        var state = DEFAULT
         for (i in lines.indices) {
-            state = highlight(lines[i], state)
+            val line = lines[i]
+            val lineColors = line.colors ?: continue
+            lineColors.fill(DEFAULT, line.i0, line.i1 + 1)
+            state = highlight(line, state)
         }
     }
 }

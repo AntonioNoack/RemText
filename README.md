@@ -10,8 +10,8 @@ Supports basic syntax highlighting for
 - C, C++, Rust, Zig, Go,
 - C#, Java, Kotlin, Swift,
 - JavaScript, HTML, CSS, PHP,
-- JSON, YAML, XML,
-- Shell,
+- JSON, YAML, XML, CSV,
+- Markdown, Shell,
 - GLSL, HLSL.
 
 ## Controls
