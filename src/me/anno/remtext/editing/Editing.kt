@@ -1,5 +1,6 @@
 package me.anno.remtext.editing
 
+import me.anno.remtext.Controls.isControlDown
 import me.anno.remtext.Rendering
 import me.anno.remtext.Rendering.countedLinesW
 import me.anno.remtext.Rendering.cursor0
@@ -137,26 +138,44 @@ object Editing {
         }
     }
 
+    fun isWord(c: Char): Boolean {
+        return c.isLetterOrDigit() || c in "_"
+    }
+
     fun cursorLeft(cursor: Cursor): Cursor {
         val lines = file.lines
         val line = lines[cursor.lineIndex]
         return if (cursor.i > line.i0) {
-            Cursor(cursor.lineIndex, cursor.i - 1)
+            // all is fine
+            var newI = cursor.i - 1
+            if (isControlDown) {
+                while (newI > line.i0 && !isWord(line.text[newI])) newI--
+                while (newI > line.i0 && isWord(line.text[newI])) newI--
+            }
+            Cursor(cursor.lineIndex, newI)
         } else if (cursor.lineIndex > 0) {
+            // move up by one line
             val prevLine = lines[cursor.lineIndex - 1]
             Cursor(cursor.lineIndex - 1, prevLine.i1)
-        } else cursor
+        } else cursor // stay at start
     }
 
     fun cursorRight(cursor: Cursor): Cursor {
         val lines = file.lines
         val line = lines[cursor.lineIndex]
         return if (cursor.i < line.i1) {
-            Cursor(cursor.lineIndex, cursor.i + 1)
+            // all is fine
+            var newI = cursor.i + 1
+            if (isControlDown) {
+                while (newI < line.i1 && !isWord(line.text[newI])) newI++
+                while (newI < line.i1 && isWord(line.text[newI])) newI++
+            }
+            Cursor(cursor.lineIndex, newI)
         } else if (cursor.lineIndex + 1 < lines.size) {
+            // move down by one line
             val nextLine = lines[cursor.lineIndex + 1]
             Cursor(cursor.lineIndex + 1, nextLine.i0)
-        } else cursor
+        } else cursor // stay at end
     }
 
     fun cursorUp(cursor: Cursor): Cursor {

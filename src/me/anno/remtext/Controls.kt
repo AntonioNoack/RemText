@@ -274,29 +274,29 @@ object Controls {
                 }
                 GLFW_KEY_UP -> {
                     if (inputMode == InputMode.TEXT) {
-                        val newCursor = cursorUp(cursor1)
-                        if (newCursor != cursor1) {
-                            cursor1 = newCursor
-                            if (!isShiftDown) cursor0 = newCursor
-                            blink0 = System.nanoTime()
-                            scrollY -= lineHeight
-                        }
-                    } else {
-                        showPrevSearchResult()
-                    }
+                        if (!isControlDown) {
+                            val newCursor = cursorUp(cursor1)
+                            if (newCursor != cursor1) {
+                                cursor1 = newCursor
+                                if (!isShiftDown) cursor0 = newCursor
+                                blink0 = System.nanoTime()
+                                scrollY -= lineHeight
+                            }
+                        } else scrollY -= lineHeight
+                    } else showPrevSearchResult()
                 }
                 GLFW_KEY_DOWN -> {
                     if (inputMode == InputMode.TEXT) {
-                        val newCursor = cursorDown(cursor1)
-                        if (newCursor != cursor1) {
-                            cursor1 = newCursor
-                            if (!isShiftDown) cursor0 = newCursor
-                            blink0 = System.nanoTime()
-                            scrollY += lineHeight
-                        }
-                    } else {
-                        showNextSearchResult()
-                    }
+                        if (!isControlDown) {
+                            val newCursor = cursorDown(cursor1)
+                            if (newCursor != cursor1) {
+                                cursor1 = newCursor
+                                if (!isShiftDown) cursor0 = newCursor
+                                blink0 = System.nanoTime()
+                                scrollY += lineHeight
+                            }
+                        } else scrollY += lineHeight
+                    } else showNextSearchResult()
                 }
             }
         }
