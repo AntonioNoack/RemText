@@ -15,12 +15,13 @@ import me.anno.remtext.colors.Colors.VARIABLE
 import me.anno.remtext.colors.Language
 import me.anno.remtext.font.Line
 import me.anno.remtext.formatting.AutoFormatOptions
+import me.anno.remtext.formatting.CLikeFormatter
 import me.anno.remtext.formatting.JsonFormatter
 
 /**
  * Unified syntax highlighter for multiple C-like languages
  */
-class CLikeLanguage(private val type: CLikeLanguageType) : Language {
+class CLikeLanguage(val type: CLikeLanguageType) : Language {
     companion object {
 
         fun isLetter(c: Char) = c.isLetterOrDigit() || c in "_$"
@@ -171,6 +172,7 @@ class CLikeLanguage(private val type: CLikeLanguageType) : Language {
                     // --- Keyword detection ---
                     if (i == line.i0 || !isLetter(text[i - 1])) {
                         i = line.readKeywords(i, type.keywords[text[i]], false, i)
+                        if (i == line.i1) break@loop
                     }
 
                     // --- Comments ---
@@ -323,7 +325,8 @@ class CLikeLanguage(private val type: CLikeLanguageType) : Language {
         return when (type) {
             CLikeLanguageType.JSON -> JsonFormatter
                 .format(lines, options.indentation, options.lineBreakLength)
-            else -> null
+            CLikeLanguageType.PYTHON -> null
+            else -> CLikeFormatter.format(lines, options.indentation, options.lineBreakLength)
         }
     }
 

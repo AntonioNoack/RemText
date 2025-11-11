@@ -1,5 +1,6 @@
 package me.anno.remtext.font
 
+import me.anno.remtext.colors.Colors
 import kotlin.math.max
 import kotlin.math.min
 
@@ -139,6 +140,20 @@ class Line(
 
     fun startsWith(prefix: String, i0: Int, ignoreCase: Boolean = false): Boolean {
         return i0 >= this.i0 && i0 + prefix.length <= i1 && text.startsWith(prefix, i0, ignoreCase)
+    }
+
+    fun isString(i: Int): Boolean {
+        if (i !in i0..<i1) return false
+        val colors = colors ?: return false
+        val color = colors[i and Colors.COLOR_MASK]
+        return color == Colors.STRING || color == Colors.ML_STRING
+    }
+
+    fun isComment(i: Int): Boolean {
+        if (i !in i0..<i1) return false
+        val colors = colors ?: return false
+        val color = colors[i and Colors.COLOR_MASK]
+        return color == Colors.COMMENT || color == Colors.ML_COMMENT || color == Colors.TODO
     }
 
 }
