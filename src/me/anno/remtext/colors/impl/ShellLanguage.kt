@@ -3,20 +3,21 @@ package me.anno.remtext.colors.impl
 import me.anno.remtext.colors.Colors
 import me.anno.remtext.colors.Colors.COMMENT
 import me.anno.remtext.colors.Colors.DEFAULT
-import me.anno.remtext.colors.Colors.KEYWORD
 import me.anno.remtext.colors.Colors.NUMBER
 import me.anno.remtext.colors.Colors.STRING
 import me.anno.remtext.colors.Colors.VARIABLE
 import me.anno.remtext.colors.Language
 import me.anno.remtext.colors.impl.CLikeLanguage.Companion.findEndOfNumber
 import me.anno.remtext.colors.impl.CLikeLanguage.Companion.findEndOfString
+import me.anno.remtext.colors.impl.CLikeLanguage.Companion.readKeywords
+import me.anno.remtext.colors.impl.CLikeLanguage.Companion.splitKeywords
 import me.anno.remtext.font.Line
 
 object ShellLanguage : Language {
 
     val keywords = ("if,then,else,elif,fi,for,while,do,done,case,esac,function,select,until,break,continue," +
             "return,in,export,readonly,local,declare,typeset,unset,trap,exit,eval")
-        .split(',').groupBy { it[0] }
+        .splitKeywords(false)
 
     override fun highlight(line: Line, state0: Byte): Byte {
 
@@ -70,15 +71,9 @@ object ShellLanguage : Language {
                     colors.fill(NUMBER, i, end)
                     i = end
                 }
-                text[i].isLetter() -> {
-                    val start = i
-                    while (i < line.i1 && text[i].isLetterOrDigit()) i++
-                    val word = text.substring(start, i)
-                    if (keywords[word[0]]?.contains(word) == true) {
-                        colors.fill(KEYWORD, start, i)
-                    }
+                else -> {
+                    i = line.readKeywords(i, keywords[text[i]], false, i + 1)
                 }
-                else -> i++
             }
         }
 

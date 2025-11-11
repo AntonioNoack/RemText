@@ -73,7 +73,9 @@ class CLikeLanguage(private val type: CLikeLanguageType) : Language {
             return j
         }
 
-        // Helper for Kotlin/Swift """...""" strings
+        /**
+         * Kotlin/Swift """...""" strings
+         * */
         private fun findTripleQuoteStringEnd(line: Line, start: Int): Int {
             val text = line.text
             val type = text[start]
@@ -89,7 +91,9 @@ class CLikeLanguage(private val type: CLikeLanguageType) : Language {
             return line.i1
         }
 
-        // Helper for JS backtick strings
+        /**
+         * JS backtick strings
+         * */
         private fun findBacktickStringEnd(line: Line, start: Int): Int {
             val text = line.text
             var i = start + 1
@@ -102,7 +106,9 @@ class CLikeLanguage(private val type: CLikeLanguageType) : Language {
             return line.i1
         }
 
-        // Helper for Rust raw strings r#"..."# or r##"..."##
+        /**
+         * Rust raw strings r#"..."# or r##"..."##
+         * */
         private fun findRustRawStringEnd(line: Line, start: Int): Int {
             val text = line.text
             var i = start + 1
@@ -130,6 +136,25 @@ class CLikeLanguage(private val type: CLikeLanguageType) : Language {
             return line.i1
         }
 
+        fun Line.readKeywords(
+            i0: Int, keywords: List<String>?, ignoreCase: Boolean,
+            elseInt: Int
+        ): Int {
+            val lineI1 = i1
+            if (keywords != null) for (keyword in keywords) {
+                val i1 = i0 + keyword.length
+                if (startsWith(keyword, i0, ignoreCase) &&
+                    (i1 >= lineI1 || !text[i1].isLetterOrDigit())
+                ) {
+                    colors?.fill(KEYWORD, i0, i1)
+                    return i1
+                }
+            }
+            return elseInt
+        }
+
+        fun String.splitKeywords(ignoreCase: Boolean) = KeywordMap(split(','), ignoreCase)
+
     }
 
     override fun highlight(line: Line, state0: Byte): Byte {
@@ -145,16 +170,7 @@ class CLikeLanguage(private val type: CLikeLanguageType) : Language {
                 DEFAULT -> {
                     // --- Keyword detection ---
                     if (i == line.i0 || !isLetter(text[i - 1])) {
-                        val candidates = type.keywords[text[i].lowercaseChar()] ?: emptyList()
-                        val keyword = candidates.firstOrNull { kw ->
-                            line.startsWith(kw, i) &&
-                                    (i + kw.length == text.length || !isLetter(text[i + kw.length]))
-                        }
-                        if (keyword != null) {
-                            colors.fill(KEYWORD, i, i + keyword.length)
-                            i += keyword.length
-                            continue@loop
-                        }
+                        i = line.readKeywords(i, type.keywords[text[i]], false, i)
                     }
 
                     // --- Comments ---

@@ -1,11 +1,13 @@
 package me.anno.remtext.colors.impl
 
+import me.anno.remtext.colors.impl.CLikeLanguage.Companion.splitKeywords
+
 enum class CLikeLanguageType {
     C, CPP, JAVA, CSHARP, GLSL, HLSL, GO,
     JAVASCRIPT, JSON, KOTLIN, PYTHON, RUST,  SWIFT, ZIG,
     PHP;
 
-    val keywords: Map<Char, List<String>> by lazy {
+    val keywords by lazy {
         when (this) {
             C -> "auto,break,case,char,const,continue,default,do,double,else,enum,extern,float,for,goto,if," +
                     "int,long,register,return,short,signed,sizeof,static,struct,switch,typedef,union,unsigned," +
@@ -95,7 +97,7 @@ enum class CLikeLanguageType {
             ZIG -> "abort,align,asm,async,await,break,catch,comptime,const,continue,defer,else,enum,error," +
                     "export,extern,false,fn,if,import,in,inline,linksection,opaque,or,panic,packed,return,suspend," +
                     "switch,true,struct,undefined,union,var,volatile,while"
-        }.split(',').groupBy { it[0] }
+        }.splitKeywords(false)
     }
 
     val supportsTriangleStrings: Boolean

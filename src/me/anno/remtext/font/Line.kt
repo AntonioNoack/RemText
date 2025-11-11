@@ -123,22 +123,22 @@ class Line(
         return numLines
     }
 
-    fun indexOf(start: Char, i0: Int, ignoreCase: Boolean = false): Int {
+    fun indexOf(part: Char, i0: Int, ignoreCase: Boolean = false): Int {
         for (i in max(i0, this.i0) until i1) {
-            if (text[i].equals(start, ignoreCase)) return i
+            if (text[i].equals(part, ignoreCase)) return i
         }
         return -1
     }
 
-    fun indexOf(start: String, i0: Int, ignoreCase: Boolean = false): Int {
-        for (i in max(i0, this.i0)..i1 - start.length) {
-            if (text.startsWith(start, i, ignoreCase)) return i
+    fun indexOf(part: String, i0: Int, ignoreCase: Boolean = false): Int {
+        for (i in max(i0, this.i0)..i1 - part.length) {
+            if (text.startsWith(part, i, ignoreCase)) return i
         }
         return -1
     }
 
-    fun startsWith(start: String, i0: Int, ignoreCase: Boolean = false): Boolean {
-        return i0 >= this.i0 && i0 + start.length <= i1 && text.startsWith(start, i0, ignoreCase)
+    fun startsWith(prefix: String, i0: Int, ignoreCase: Boolean = false): Boolean {
+        return i0 >= this.i0 && i0 + prefix.length <= i1 && text.startsWith(prefix, i0, ignoreCase)
     }
 
 }

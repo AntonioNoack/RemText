@@ -41,7 +41,6 @@ Supports basic syntax highlighting for
 - escape: exit search/replace; exit program
 
 ## Planned Features
-- Markdown highlighting
 - Save-as-menu?
 - New-file-menu?
 - Rendering unknown symbols as hex-code
