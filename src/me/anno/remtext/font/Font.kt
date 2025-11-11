@@ -81,7 +81,7 @@ object Font {
 
         val image = BufferedImage(width, lineHeight, BufferedImage.TYPE_INT_RGB)
         val gfx = image.graphics as Graphics2D
-        gfx.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB)
+        gfx.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON)
 
         gfx.background = Color.BLACK
         gfx.color = Color.WHITE
