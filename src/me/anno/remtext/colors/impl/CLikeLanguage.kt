@@ -283,6 +283,12 @@ class CLikeLanguage(private val type: CLikeLanguageType) : Language {
                             in ";,/*<>%&|!?=:+-" -> colors[i++] = SYMBOL
                             in "([{" -> colors[i++] = BRACKET
                             in ")]}" -> colors[i++] = BRACKET
+                            in 'A'..'Z', in 'a'..'z' -> {
+                                var end = i + 1
+                                while (end < line.i1 && (text[end].isLetterOrDigit() || text[end] in "_")) end++
+                                colors.fill(VARIABLE, i, end)
+                                i = end
+                            }
                             else -> i++
                         }
                     }

@@ -24,7 +24,7 @@ object Colors {
 
     val darkStyle = run {
 
-        val textColor = Color(0xDDDDDD)
+        val textColor = Color(0xffffaa)
         val commentColor = Color(0x8ACF24)
         val numberColor = Color(0x33BCCC)
         val symbolColor = Color(0xBBBBBB)
@@ -32,7 +32,7 @@ object Colors {
         val bracketColor = Color(0xC0A070)
         val stringColor = Color(0xA0CF7E)
         val todoColor = Color(0xC0ED2A)
-        val variableColor = Color(0xFFFFFF)
+        val variableColor = Color(0xDDDDDD)
         val docColor = Color(0x8ACF24)
 
         arrayOf(
@@ -53,7 +53,7 @@ object Colors {
 
     val lightStyle = run {
 
-        val textColor = Color(0x222222)
+        val textColor = Color(0x223344)
         val commentColor = Color(0x365514)
         val numberColor = Color(0x155E63)
         val symbolColor = Color(0x555555)
