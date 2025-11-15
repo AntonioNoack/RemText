@@ -9,6 +9,7 @@ object Languages {
     init {
         highlighters["c"] = CLikeLanguage(CLikeLanguageType.C)
         highlighters["cpp"] = CLikeLanguage(CLikeLanguageType.CPP)
+        highlighters["h"] = CLikeLanguage(CLikeLanguageType.C_OR_CPP)
         highlighters["cs"] = CLikeLanguage(CLikeLanguageType.CSHARP)
         highlighters["go"] = CLikeLanguage(CLikeLanguageType.GO)
         highlighters["java"] = CLikeLanguage(CLikeLanguageType.JAVA)
@@ -36,7 +37,6 @@ object Languages {
         alias("cs", "csharp")
         alias("py", "pyx", "cython")
         alias("html", "php", "hbs", "htm")
-        alias("c", "h")
         alias("cpp", "hpp")
         alias("glsl", "vert", "frag", "geo")
         alias("md", "markdown")

@@ -3,7 +3,7 @@ package me.anno.remtext.colors.impl
 import me.anno.remtext.colors.impl.CLikeLanguage.Companion.splitKeywords
 
 enum class CLikeLanguageType {
-    C, CPP, JAVA, CSHARP, GLSL, HLSL, GO,
+    C, CPP, C_OR_CPP, JAVA, CSHARP, GLSL, HLSL, GO,
     JAVASCRIPT, JSON, KOTLIN, PYTHON, RUST,  SWIFT, ZIG,
     PHP;
 
@@ -14,6 +14,18 @@ enum class CLikeLanguageType {
                     "void,volatile,while,_Bool,_Complex,_Imaginary"
 
             CPP -> "alignas,alignof,and,and_eq,asm,auto,bitand,bitor,bool,break,case,catch,char,char8_t," +
+                    "char16_t,char32_t,class,compl,const,const_cast,continue,decltype,default,delete,do,double," +
+                    "dynamic_cast,else,enum,explicit,export,extern,false,float,for,friend,goto,if,inline,int,long," +
+                    "mutable,namespace,new,noexcept,not,not_eq,nullptr,operator,or,or_eq,private,protected,public," +
+                    "register,reinterpret_cast,return,short,signed,sizeof,static,static_assert,static_cast,struct," +
+                    "switch,template,this,thread_local,throw,true,try,typedef,typeid,typename,union,unsigned,using," +
+                    "virtual,void,volatile,wchar_t,while,xor,xor_eq"
+
+            C_OR_CPP -> "auto,break,case,char,const,continue,default,do,double,else,enum,extern,float,for,goto,if," +
+                    "int,long,register,return,short,signed,sizeof,static,struct,switch,typedef,union,unsigned," +
+                    "void,volatile,while,_Bool,_Complex,_Imaginary," +
+
+                    "alignas,alignof,and,and_eq,asm,auto,bitand,bitor,bool,break,case,catch,char,char8_t," +
                     "char16_t,char32_t,class,compl,const,const_cast,continue,decltype,default,delete,do,double," +
                     "dynamic_cast,else,enum,explicit,export,extern,false,float,for,friend,goto,if,inline,int,long," +
                     "mutable,namespace,new,noexcept,not,not_eq,nullptr,operator,or,or_eq,private,protected,public," +
@@ -113,5 +125,5 @@ enum class CLikeLanguageType {
         get() = this == PYTHON
 
     val supportsPreprocessor: Boolean
-        get() = this == C || this == CPP || this == CSHARP || this == GLSL || this == HLSL
+        get() = this == C || this == CPP || this == C_OR_CPP || this == CSHARP || this == GLSL || this == HLSL
 }

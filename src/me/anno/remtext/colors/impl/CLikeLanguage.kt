@@ -71,6 +71,9 @@ class CLikeLanguage(val type: CLikeLanguageType) : Language {
                 if (j < line.i1 && text[j] in "+-") j++
                 while (j < line.i1 && text[j] in '0'..'9') j++
             }
+            // suffix
+            if (j < line.i1 && text[j].lowercaseChar() in "fdul") j++
+            if (j < line.i1 && text[j].lowercaseChar() in "fdul") j++
             return j
         }
 
