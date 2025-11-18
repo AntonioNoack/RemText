@@ -30,8 +30,4 @@ class Texture(data: PixelData) {
         // Unbind
         glBindTexture(GL_TEXTURE_2D, 0)
     }
-
-    fun destroy() {
-        glDeleteTextures(pointer)
-    }
 }

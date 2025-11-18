@@ -9,7 +9,7 @@ class StringListTransferable(
 ) : Transferable {
 
     companion object {
-        val separator = System.lineSeparator()
+        val separator: String = System.lineSeparator()
         val stringListFlavor = DataFlavor(
             List::class.java,
             "application/x-kotlin-string-list"

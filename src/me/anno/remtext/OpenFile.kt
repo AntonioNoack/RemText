@@ -1,7 +1,6 @@
 package me.anno.remtext
 
 import me.anno.remtext.Rendering.countedLinesW
-import me.anno.remtext.colors.Colors
 import me.anno.remtext.colors.Colors.DEFAULT
 import me.anno.remtext.colors.Languages
 import me.anno.remtext.editing.Cursor
@@ -73,7 +72,7 @@ class OpenFile(val file: File) {
             val colors = if (language != null) ByteArray(text.length + 1) else null
 
             var i0 = 0
-            var state = Colors.DEFAULT
+            var state = DEFAULT
             while (i0 < text.length) {
                 var i1 = text.indexOf('\n', i0)
                 if (i1 < 0) i1 = text.length
