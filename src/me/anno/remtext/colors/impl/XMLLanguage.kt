@@ -112,15 +112,15 @@ class XMLLanguage(val isHTML: Boolean = false) : Language {
             val langIndex = unpackLang(state)
             val endIndex = when (langIndex) {
                 JS_INDEX -> {
-                    state = js.highlight(line.subList(i, line.i1), unpackLangState(state))
+                    state = js.highlight(line.subLine(i, line.i1), unpackLangState(state))
                     detectEndScriptSafely(line, i, "</script>", JS_INDEX)
                 }
                 PHP_INDEX -> {
-                    state = php.highlight(line.subList(i, line.i1), unpackLangState(state))
+                    state = php.highlight(line.subLine(i, line.i1), unpackLangState(state))
                     detectEndScriptSafely(line, i, "?>", PHP_INDEX)
                 }
                 CSS_INDEX -> {
-                    state = css.highlight(line.subList(i, line.i1), unpackLangState(state))
+                    state = css.highlight(line.subLine(i, line.i1), unpackLangState(state))
                     detectEndScriptSafely(line, i, "</style>", CSS_INDEX)
                 }
                 else -> {
@@ -183,7 +183,7 @@ class XMLLanguage(val isHTML: Boolean = false) : Language {
                                 var end = line.indexOf("}}", i + 2)
                                 end = if (end < 0) line.i1 else end + 2
                                 // Delegate to JS/CLanguage highlighting for the inner expression
-                                val subLine = line.subList(i, end)
+                                val subLine = line.subLine(i, end)
                                 CLikeLanguage(CLikeLanguageType.JAVASCRIPT)
                                     .highlight(subLine, DEFAULT)
                                 i = end

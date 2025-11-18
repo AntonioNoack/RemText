@@ -51,34 +51,12 @@ object Rendering {
 
     var blink0 = System.nanoTime()
 
-    var cursor0: Cursor
-        get() = file.cursor0
-        set(value) {
-            file.cursor0 = value
-        }
-
-    var cursor1: Cursor
-        get() = file.cursor1
-        set(value) {
-            file.cursor1 = value
-        }
+    val cursors
+        get() = file.cursors
 
     fun gfxCheck() {
         val error = glGetError()
         if (error != 0) throw IllegalStateException()
-    }
-
-    fun minI(c0: Cursor, c1: Cursor): Cursor {
-        return if (c0.lineIndex == c1.lineIndex) {
-            if (c0.i < c1.i) c0 else c1
-        } else if (c0.lineIndex < c1.lineIndex) {
-            c0
-        } else c1
-    }
-
-    fun maxI(c0: Cursor, c1: Cursor): Cursor {
-        val min = minI(c0, c1)
-        return if (c0 == min) c1 else c0
     }
 
     var lastMaxLineWidth = 0L
@@ -137,7 +115,7 @@ object Rendering {
             windowHeight = height
 
             val bgColor = if (isDarkTheme) dark else bright
-            val srBgColor = if(isDarkTheme) darkSr else brightSr
+            val srBgColor = if (isDarkTheme) darkSr else brightSr
             val textColor = if (isDarkTheme) bright else dark
 
             autoScrollOnBorder()
@@ -150,7 +128,7 @@ object Rendering {
             dy = 2f / height
 
             val showCursor0 = ((System.nanoTime() - blink0) / 500_000_000L).and(1) == 0L
-            val showCursor = showCursor0 && inputMode == InputMode.TEXT && cursor0 == cursor1
+            val showCursor = showCursor0 && inputMode == InputMode.TEXT //&& cursor0 == cursor1
             val showDraggingCursor = isDraggingText && mouseHasMoved
 
             flatShader.use()
@@ -176,9 +154,6 @@ object Rendering {
 
             var numLines = 0
             var maxLineWidth = 0
-
-            val minCursor = minI(cursor0, cursor1)
-            val maxCursor = maxI(cursor0, cursor1)
 
             var y = -scrollY + numHiddenLines * lineHeight
             val minY0 = numHiddenLines * lineHeight - 5 // -5, so arrow-up works
@@ -206,20 +181,9 @@ object Rendering {
                 texShader.use()
             }
 
-            fun isSelected(lineIndex: Int, i: Int): Boolean {
-                return if (lineIndex in minCursor.lineIndex..maxCursor.lineIndex) {
-                    if (lineIndex == minCursor.lineIndex && lineIndex == maxCursor.lineIndex) {
-                        i in minCursor.i until maxCursor.i
-                    } else if (lineIndex == minCursor.lineIndex) {
-                        i >= minCursor.i
-                    } else if (lineIndex == maxCursor.lineIndex) {
-                        i < maxCursor.i
-                    } else true // in-between
-                } else false
-            }
-
             fun onChar(line: Line, lineIndex: Int, i: Int, x: Int, width: Int) {
-                val isSelected = isSelected(lineIndex, i)
+                val relI = i - line.i0
+                val isSelected = cursors.any { pair -> pair.isSelected(lineIndex, relI) }
                 if (isSelected != wasSelected) {
                     if (isSelected) {
                         lastCharX = x
@@ -228,9 +192,9 @@ object Rendering {
                     wasSelected = isSelected
                 }
 
-                val sr = searchResults.getOrNull(nextSearchIndex)
-                val isSearchResult = sr != null && sr.lineIndex == lineIndex
-                        && i in sr.i until sr.i + searchedLength
+                val searchResult = searchResults.getOrNull(nextSearchIndex)
+                val isSearchResult = searchResult != null && searchResult.lineIndex == lineIndex
+                        && relI in searchResult.relI until searchResult.relI + searchedLength
 
                 val textColorI =
                     if (isSelected) bgColor
@@ -245,7 +209,7 @@ object Rendering {
                 color3(texShader.bgColor, bgColorI)
                 color3(texShader.textColor, textColorI)
 
-                if (sr != null && i >= sr.i + searchedLength) {
+                if (searchResult != null && relI >= searchResult.relI + searchedLength) {
                     nextSearchIndex++
                 }
 
@@ -262,15 +226,12 @@ object Rendering {
                         fillSelectionBg(x + width, bgColorI)
                     }
 
-                    if (showCursor &&
-                        lineIndex == cursor0.lineIndex &&
-                        i == cursor1.i
-                    ) {
+                    if (showCursor && cursors.any { it.show(lineIndex, relI) }) {
                         drawCursor(x, y.toInt())
                     } else if (
                         showDraggingCursor &&
                         lineIndex == draggingCursor.lineIndex &&
-                        i == draggingCursor.i
+                        relI == draggingCursor.relI
                     ) {
                         drawCursor(x, y.toInt())
                     }
@@ -278,6 +239,16 @@ object Rendering {
 
                 lastCharX = x + width
             }
+
+            // line up/down won't work, when not all lines are on screen, which CAN be the case when multi-line editing is used...
+            //  -> when that is the case, we need to always draw the respective lines, too... cursors.map{it.second}
+            //  -> todo we should find a cleaner way
+            val uniqueCursorLineIndices0 =
+                cursors.map { it.second.lineIndex }.toSet()
+            val uniqueCursorLineIndices = uniqueCursorLineIndices0 +
+                    uniqueCursorLineIndices0.map { it + 1 } + // for cursor-down
+                    uniqueCursorLineIndices0.map { it - 1 } // for cursor-up
+            val maxCursorLineIndex = uniqueCursorLineIndices.maxOrNull() ?: -1
 
             lines@ for (lineIndex in lines.indices) {
                 val line = lines[lineIndex]
@@ -289,9 +260,11 @@ object Rendering {
 
                     val wrappedLines = line.getNumLines(width - lineNumberOffset)
                     val drawnHeight = wrappedLines * lineHeight
-                    if (y < height && y + drawnHeight >= minY0) {
+                    val isVisible = y < height && y + drawnHeight >= minY0
+                    val isSpecialLine = !isVisible && lineIndex in uniqueCursorLineIndices
+                    if (isVisible || isSpecialLine) {
 
-                        lineStarts.add(LineStart(line.i0, lineIndex, lineNumberOffset, y.toInt()))
+                        lineStarts.add(LineStart(0, lineIndex, lineNumberOffset, y.toInt()))
                         nextSearchIndex = findNextSearchIndex(lineIndex, line.i0)
 
                         // draw text
@@ -310,20 +283,22 @@ object Rendering {
                                 y += lineHeight
                                 numLines++
                                 if (y >= height) break@line
-                                lineStarts.add(LineStart(i, lineIndex, x - dxi, y.toInt()))
+                                lineStarts.add(LineStart(i - line.i0, lineIndex, x - dxi, y.toInt()))
                             }
 
-                            val tex = Font.getTexture(curr)
-                            if (y + tex.height >= minY0) {
-                                onChar(line, lineIndex, i, x - dxi, tex.width)
-                                glBindTexture(GL_TEXTURE_2D, tex.pointer)
-                                drawQuad(texShader.bounds, x - dxi, y, tex.width, tex.height)
+                            if (isVisible) {
+                                val tex = Font.getTexture(curr)
+                                if (y + tex.height >= minY0) {
+                                    onChar(line, lineIndex, i, x - dxi, tex.width)
+                                    glBindTexture(GL_TEXTURE_2D, tex.pointer)
+                                    drawQuad(texShader.bounds, x - dxi, y, tex.width, tex.height)
+                                }
                             }
                         }
 
                         if (y + lineHeight >= minY0 && y < height &&
-                            ((showCursor && lineIndex == cursor0.lineIndex && cursor0.i >= line.i1) ||
-                                    (showDraggingCursor && lineIndex == draggingCursor.lineIndex && draggingCursor.i >= line.i1))
+                            ((showCursor && file.cursors.any { it.showEOL(lineIndex, line.length) }) ||
+                                    (showDraggingCursor && lineIndex == draggingCursor.lineIndex && draggingCursor.relI >= line.length))
                         ) {
                             val x = line.getOffset(line.i1) + lineNumberOffset - dxi
                             drawCursor(x, y.toInt())
@@ -334,44 +309,49 @@ object Rendering {
                         numLines += (wrappedLines - 1)
                         y += lineHeight * (wrappedLines - 1)
                     }
-                } else if (y < height && y + lineHeight >= minY0) {
+                } else {
+                    val isVisible = y < height && y + lineHeight >= minY0
+                    val isSpecialLine = !isVisible && lineIndex in uniqueCursorLineIndices
+                    if (isVisible || isSpecialLine) {
 
-                    // draw text
-                    val dxi = lineNumberOffset - scrollX.toInt()
-                    lineStarts.add(LineStart(line.i0, lineIndex, dxi, y.toInt()))
+                        // draw text
+                        val dxi = lineNumberOffset - scrollX.toInt()
+                        lineStarts.add(LineStart(0, lineIndex, dxi, y.toInt()))
+                        if (!isVisible) continue
 
-                    // find the first character to be rendered
-                    var i0 = binarySearch(0, line.i1 - line.i0) { idx ->
-                        line.getOffset(idx + line.i0) + dxi
-                    }
-                    if (i0 < 0) i0 = -i0 - 2
-                    i0 = line.i0 + max(0, i0)
+                        // find the first character to be rendered
+                        var i0 = binarySearch(0, line.i1 - line.i0) { idx ->
+                            line.getOffset(idx + line.i0) + dxi
+                        }
+                        if (i0 < 0) i0 = -i0 - 2
+                        i0 = line.i0 + max(0, i0)
 
-                    nextSearchIndex = findNextSearchIndex(lineIndex, i0)
+                        nextSearchIndex = findNextSearchIndex(lineIndex, i0)
 
-                    line@ for (i in i0 until line.i1) {
-                        val curr = text[i]
-                        val x = line.getOffset(i) + dxi
-                        if (x >= width) break@line
-                        if (curr == ' ') {
-                            onChar(line, lineIndex, i, x, Font.spaceWidth)
-                            continue
+                        line@ for (i in i0 until line.i1) {
+                            val curr = text[i]
+                            val x = line.getOffset(i) + dxi
+                            if (x >= width) break@line
+                            if (curr == ' ') {
+                                onChar(line, lineIndex, i, x, Font.spaceWidth)
+                                continue
+                            }
+
+                            val tex = Font.getTexture(curr)
+                            if (x + tex.width > 0) {
+                                onChar(line, lineIndex, i, x, tex.width)
+                                glBindTexture(GL_TEXTURE_2D, tex.pointer)
+                                drawQuad(texShader.bounds, x, y, tex.width, tex.height)
+                            }
                         }
 
-                        val tex = Font.getTexture(curr)
-                        if (x + tex.width > 0) {
-                            onChar(line, lineIndex, i, x, tex.width)
-                            glBindTexture(GL_TEXTURE_2D, tex.pointer)
-                            drawQuad(texShader.bounds, x, y, tex.width, tex.height)
+                        if (y + lineHeight >= minY0 && y < height &&
+                            ((showCursor && file.cursors.any { it.showEOL(lineIndex, line.length) }) ||
+                                    (showDraggingCursor && lineIndex == draggingCursor.lineIndex && draggingCursor.relI >= line.length))
+                        ) {
+                            val x = line.getOffset(line.i1) + lineNumberOffset
+                            drawCursor(x, y.toInt())
                         }
-                    }
-
-                    if (y + lineHeight >= minY0 && y < height &&
-                        ((showCursor && lineIndex == cursor0.lineIndex && cursor0.i >= line.i1) ||
-                                (showDraggingCursor && lineIndex == draggingCursor.lineIndex && draggingCursor.i >= line.i1))
-                    ) {
-                        val x = line.getOffset(line.i1) + lineNumberOffset
-                        drawCursor(x, y.toInt())
                     }
                 }
 
@@ -383,11 +363,11 @@ object Rendering {
                     wasSelected = false
                 }
 
-                // todo show current line number and cursor position faintly
-
                 y += lineHeight
                 numLines++
-                if (y >= height) break@lines
+
+                if (y >= height && lineIndex >= maxCursorLineIndex) break@lines
+                // else we need to continue drawing/checking lines
             }
 
             // show the current search & replacement term
@@ -492,7 +472,8 @@ object Rendering {
 
     private fun findNextSearchIndex(lineIndex: Int, i: Int): Int {
         val searchResults = searchResults
-        val searched = Cursor(lineIndex, i)
+        val line = file.lines[lineIndex]
+        val searched = Cursor(lineIndex, i - line.i0)
         var index = binarySearch(0, searchResults.lastIndex) { idx ->
             searchResults[idx].compareTo(searched)
         }

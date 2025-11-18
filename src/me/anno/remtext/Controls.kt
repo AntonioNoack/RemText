@@ -2,20 +2,17 @@ package me.anno.remtext
 
 import me.anno.remtext.Rendering.barWidth
 import me.anno.remtext.Rendering.blink0
-import me.anno.remtext.Rendering.cursor0
-import me.anno.remtext.Rendering.cursor1
+import me.anno.remtext.Rendering.cursors
 import me.anno.remtext.Rendering.file
-import me.anno.remtext.Rendering.maxI
 import me.anno.remtext.Rendering.maxScrollX
 import me.anno.remtext.Rendering.maxScrollY
-import me.anno.remtext.Rendering.minI
 import me.anno.remtext.Window.WINDOW_TITLE
 import me.anno.remtext.Window.isDarkTheme
 import me.anno.remtext.Window.lightThemeFile
 import me.anno.remtext.Window.window
 import me.anno.remtext.Window.windowHeight
 import me.anno.remtext.Window.windowWidth
-import me.anno.remtext.editing.Cursor
+import me.anno.remtext.editing.*
 import me.anno.remtext.editing.Editing.cursorDown
 import me.anno.remtext.editing.Editing.cursorLeft
 import me.anno.remtext.editing.Editing.cursorRight
@@ -23,13 +20,11 @@ import me.anno.remtext.editing.Editing.cursorUp
 import me.anno.remtext.editing.Editing.findLineAt
 import me.anno.remtext.editing.Editing.getCursorPosition
 import me.anno.remtext.editing.Editing.getFullString
-import me.anno.remtext.editing.Editing.getSelectedString
+import me.anno.remtext.editing.Editing.getSelectedStrings
 import me.anno.remtext.editing.Editing.highLevelDeleteSelection
 import me.anno.remtext.editing.Editing.highLevelPaste
 import me.anno.remtext.editing.Editing.sameX
-import me.anno.remtext.editing.FormatChange
-import me.anno.remtext.editing.InputMode
-import me.anno.remtext.editing.TextBox
+import me.anno.remtext.editing.StringListTransferable.Companion.stringListFlavor
 import me.anno.remtext.font.Font
 import me.anno.remtext.font.Font.lineHeight
 import me.anno.remtext.font.Line
@@ -37,12 +32,24 @@ import me.anno.remtext.formatting.AutoFormatOptions
 import org.lwjgl.glfw.GLFW.*
 import java.awt.Toolkit
 import java.awt.datatransfer.DataFlavor
-import java.awt.datatransfer.StringSelection
+import java.awt.datatransfer.UnsupportedFlavorException
 import kotlin.concurrent.thread
 import kotlin.math.max
 import kotlin.math.sqrt
 
 object Controls {
+
+    private var cursor0: Cursor
+        get() = file.cursor0
+        set(value) {
+            file.cursor0 = value
+        }
+
+    private var cursor1: Cursor
+        get() = file.cursor1
+        set(value) {
+            file.cursor1 = value
+        }
 
     var scrollX = 0L
     var scrollY = 0L
@@ -50,8 +57,12 @@ object Controls {
     var mouseX = 0
     var mouseY = 0
 
+    var isAltDown = false
     var isShiftDown = false
     var isControlDown = false
+
+    var lastPressedControl = 0L
+    var isDoubleControlDown = false
 
     fun addListeners() {
         glfwSetScrollCallback(window) { _, _, dy ->
@@ -71,6 +82,18 @@ object Controls {
             }
             if (key == GLFW_KEY_LEFT_CONTROL || key == GLFW_KEY_RIGHT_CONTROL) {
                 isControlDown = typed
+                if (!typed) { // key up
+                    lastPressedControl = System.nanoTime()
+                    isDoubleControlDown = false
+                } else {
+                    // key down
+                    if (System.nanoTime() - lastPressedControl < 300e6) {
+                        isDoubleControlDown = true
+                    }
+                }
+            }
+            if (key == GLFW_KEY_LEFT_ALT || key == GLFW_KEY_RIGHT_ALT) {
+                isAltDown = typed
             }
 
             if (typed) when (key) {
@@ -85,44 +108,40 @@ object Controls {
                 GLFW_KEY_PAGE_UP -> Font.inc()
                 GLFW_KEY_PAGE_DOWN -> Font.dec()
                 GLFW_KEY_ESCAPE -> when (inputMode) {
-                    InputMode.TEXT -> glfwSetWindowShouldClose(window, true)
+                    InputMode.TEXT -> {
+                        if (cursors.size > 1) cursors.subList(0, cursors.lastIndex).clear()
+                        else glfwSetWindowShouldClose(window, true)
+                    }
                     else -> inputMode = InputMode.TEXT
                 }
                 GLFW_KEY_A -> {
                     if (pressed && isControlDown) {
                         when (inputMode) {
                             InputMode.TEXT -> {
-                                cursor0 = Cursor.ZERO
+                                val first = Cursor.ZERO
                                 val lines = file.lines
-                                val lastLine = lines.lastIndex
-                                cursor1 = Cursor(lastLine, lines[lastLine].i1)
+                                val lastLineI = lines.lastIndex
+                                val second = Cursor(lastLineI, lines[lastLineI].length)
+                                cursors.clear()
+                                cursors.add(CursorPair(first, second))
                             }
                             InputMode.SEARCH, InputMode.SEARCH_ONLY -> searched.selectAll()
                             InputMode.REPLACE -> replaced.selectAll()
                         }
-
                     }
                 }
                 GLFW_KEY_C -> {
                     if (pressed && isControlDown) {
-                        val joined = when (inputMode) {
-                            InputMode.TEXT -> getSelectedString()
-                            InputMode.SEARCH, InputMode.SEARCH_ONLY -> searched.getSelectedString()
-                            InputMode.REPLACE -> replaced.getSelectedString()
-                        }
-                        if (joined.isNotEmpty()) {
+                        val joined = getJoinedForCopy()
+                        if (joined.any { it.isNotEmpty() }) {
                             copyContents(joined)
                         }
                     }
                 }
                 GLFW_KEY_X -> {
                     if (pressed && isControlDown) {
-                        val joined = when (inputMode) {
-                            InputMode.TEXT -> getSelectedString()
-                            InputMode.SEARCH, InputMode.SEARCH_ONLY -> searched.getSelectedString()
-                            InputMode.REPLACE -> replaced.getSelectedString()
-                        }
-                        if (joined.isNotEmpty()) {
+                        val joined = getJoinedForCopy()
+                        if (joined.any { it.isNotEmpty() }) {
                             copyContents(joined)
                             when (inputMode) {
                                 InputMode.TEXT -> highLevelDeleteSelection()
@@ -137,14 +156,14 @@ object Controls {
                 }
                 GLFW_KEY_V -> {
                     if (pressed && isControlDown && file.finished) {
-                        val toPaste = getClipboardString()
+                        val toPaste = getClipboardStrings()
                         when (inputMode) {
                             InputMode.TEXT -> highLevelPaste(toPaste)
                             InputMode.SEARCH, InputMode.SEARCH_ONLY -> {
-                                searched.paste(toPaste)
+                                searched.paste(toPaste.joinToString("\n"))
                                 updateSearchResults()
                             }
-                            InputMode.REPLACE -> replaced.paste(toPaste)
+                            InputMode.REPLACE -> replaced.paste(toPaste.joinToString("\n"))
                         }
                     }
                 }
@@ -193,8 +212,10 @@ object Controls {
                             InputMode.SEARCH -> InputMode.REPLACE
                             InputMode.REPLACE -> InputMode.SEARCH
                             InputMode.TEXT -> {
-                                val n = 4 - cursor1.i.and(3)
-                                val added = " ".repeat(n)
+                                val added = cursors.map { pair ->
+                                    val n = 4 - pair.second.relI.and(3)
+                                    " ".repeat(n)
+                                }
                                 highLevelPaste(added)
                                 inputMode
                             }
@@ -203,15 +224,18 @@ object Controls {
                     }
                 }
                 GLFW_KEY_Z, GLFW_KEY_Y -> {
-                    if (pressed && isControlDown) {
+                    if (isControlDown) {
                         if (isShiftDown) file.history.redo()
                         else file.history.undo()
                     }
                 }
                 GLFW_KEY_BACKSPACE -> when (inputMode) {
                     InputMode.TEXT -> {
-                        if (cursor0 == cursor1) {
-                            cursor0 = cursorLeft(cursor0)
+                        cursors.replaceAll { pair ->
+                            if (pair.first == pair.second) {
+                                val newFirst = cursorLeft(pair.first)
+                                CursorPair(newFirst, pair.second)
+                            } else pair
                         }
                         highLevelDeleteSelection()
                     }
@@ -223,8 +247,11 @@ object Controls {
                 }
                 GLFW_KEY_DELETE -> when (inputMode) {
                     InputMode.TEXT -> {
-                        if (cursor0 == cursor1) {
-                            cursor0 = cursorRight(cursor0)
+                        cursors.replaceAll { pair ->
+                            if (pair.first == pair.second) {
+                                val newFirst = cursorRight(pair.first)
+                                CursorPair(newFirst, pair.second)
+                            } else pair
                         }
                         highLevelDeleteSelection()
                     }
@@ -248,38 +275,24 @@ object Controls {
                         } else if (isShiftDown) showPrevSearchResult()
                         else showNextSearchResult()
                     }
-                    InputMode.TEXT -> highLevelPaste("\n")
+                    InputMode.TEXT -> highLevelPaste(listOf("\n"))
                 }
                 GLFW_KEY_LEFT -> when (inputMode) {
-                    InputMode.TEXT -> {
-                        val newCursor = cursorLeft(cursor1)
-                        cursor1 = newCursor
-                        if (!isShiftDown) cursor0 = newCursor
-                        blink0 = System.nanoTime()
-                        sameX = -1
-                    }
+                    InputMode.TEXT -> moveCursors(::cursorLeft)
                     InputMode.SEARCH, InputMode.SEARCH_ONLY -> searched.cursorLeft()
                     InputMode.REPLACE -> replaced.cursorRight()
                 }
                 GLFW_KEY_RIGHT -> when (inputMode) {
-                    InputMode.TEXT -> {
-                        val newCursor = cursorRight(cursor1)
-                        cursor1 = newCursor
-                        if (!isShiftDown) cursor0 = newCursor
-                        blink0 = System.nanoTime()
-                        sameX = -1
-                    }
+                    InputMode.TEXT -> moveCursors(::cursorRight)
                     InputMode.SEARCH, InputMode.SEARCH_ONLY -> searched.cursorRight()
                     InputMode.REPLACE -> replaced.cursorRight()
                 }
                 GLFW_KEY_UP -> {
                     if (inputMode == InputMode.TEXT) {
-                        if (!isControlDown) {
-                            val newCursor = cursorUp(cursor1)
-                            if (newCursor != cursor1) {
-                                cursor1 = newCursor
-                                if (!isShiftDown) cursor0 = newCursor
-                                blink0 = System.nanoTime()
+                        if (isDoubleControlDown) {
+                            duplicateCursorUp()
+                        } else if (!isControlDown) {
+                            if (moveCursors(::cursorUp)) {
                                 scrollY -= lineHeight
                             }
                         } else scrollY -= lineHeight
@@ -287,12 +300,10 @@ object Controls {
                 }
                 GLFW_KEY_DOWN -> {
                     if (inputMode == InputMode.TEXT) {
-                        if (!isControlDown) {
-                            val newCursor = cursorDown(cursor1)
-                            if (newCursor != cursor1) {
-                                cursor1 = newCursor
-                                if (!isShiftDown) cursor0 = newCursor
-                                blink0 = System.nanoTime()
+                        if (isDoubleControlDown) {
+                            duplicateCursorDown()
+                        } else if (!isControlDown) {
+                            if (moveCursors(::cursorDown)) {
                                 scrollY += lineHeight
                             }
                         } else scrollY += lineHeight
@@ -303,7 +314,7 @@ object Controls {
         glfwSetCharCallback(window) { _, char ->
             val added = String(Character.toChars(char))
             when (inputMode) {
-                InputMode.TEXT -> highLevelPaste(added)
+                InputMode.TEXT -> highLevelPaste(listOf(added))
                 InputMode.SEARCH, InputMode.SEARCH_ONLY -> {
                     searched.paste(added)
                     updateSearchResults()
@@ -359,6 +370,9 @@ object Controls {
                             if (inputMode != InputMode.SEARCH_ONLY) {
                                 inputMode = if (lineIndex == 0) InputMode.SEARCH else InputMode.REPLACE
                             }
+                        } else if (isAltDown && isShiftDown) {
+                            val newCursor = getCursorPosition(mouseX, mouseY)
+                            file.cursors.add(CursorPair(newCursor, newCursor))
                         } else if (isInsideSelection()) {
                             inputMode = InputMode.TEXT // just in case
                             isDraggingText = true
@@ -374,9 +388,10 @@ object Controls {
                         if (!mouseHasMoved || isInsideSelection()) {
                             setCursorByMouse()
                         } else {
+                            // todo this is probably weird with multi-selections
                             val pastePosition = getCursorPosition(mouseX, mouseY)
-                            val selected = getSelectedString()
-                            if (selected.isNotEmpty()) {
+                            val selected = getSelectedStrings()
+                            if (selected.any { it.isNotEmpty() }) {
                                 highLevelDeleteSelection()
                                 cursor0 = pastePosition
                                 cursor1 = pastePosition
@@ -391,18 +406,63 @@ object Controls {
         }
     }
 
-    fun getClipboardString(): String {
+    fun moveCursors(moveCursor: (Cursor) -> Cursor): Boolean {
+        var changed = false
+        if (cursors.isEmpty()) cursors.add(CursorPair())
+        cursors.replaceAll { (first, second) ->
+            val newSecond = moveCursor(second)
+            if (!changed && newSecond != second) changed = true
+            val newFirst = if (!isShiftDown) newSecond else first
+            if (!changed && first != newFirst) changed = true
+            CursorPair(newFirst, newSecond)
+        }
+        blink0 = System.nanoTime()
+        sameX = -1
+        return changed
+    }
+
+    fun duplicateCursorUp() {
+        val newCursor = cursorUp(cursor1)
+        file.cursors.add(CursorPair(newCursor, newCursor))
+    }
+
+    fun duplicateCursorDown() {
+        val newCursor = cursorDown(cursor1)
+        file.cursors.add(CursorPair(newCursor, newCursor))
+    }
+
+    fun getJoinedForCopy(): List<String> {
+        return when (inputMode) {
+            InputMode.TEXT -> getSelectedStrings()
+            InputMode.SEARCH, InputMode.SEARCH_ONLY -> listOf(searched.getSelectedString())
+            InputMode.REPLACE -> listOf(replaced.getSelectedString())
+        }
+    }
+
+    fun getClipboardStrings(): List<String> {
         val clipboard = Toolkit.getDefaultToolkit().systemClipboard
-        return clipboard.getData(DataFlavor.stringFlavor).toString()
-            .replace("\r", "")
+        try {
+            @Suppress("UNCHECKED_CAST")
+            return clipboard.getData(stringListFlavor) as List<String>
+        } catch (_: UnsupportedFlavorException) {
+            val text = clipboard.getData(DataFlavor.stringFlavor)
+                .toString().replace("\r", "")
+            if (cursors.size == text.count { it == '\n' } + 1) {
+                // match for multi-editing :)
+                return text.split('\n')
+            }
+            return listOf(text)
+        }
     }
 
     val mouseHasMoved get() = movedSinceLeftPress >= 10f
 
     fun setCursorByMouse() {
         blink0 = System.nanoTime()
-        cursor0 = getCursorPosition(mouseX, mouseY)
-        cursor1 = cursor0
+
+        val newCursor = getCursorPosition(mouseX, mouseY)
+        cursors.clear()
+        cursors.add(CursorPair(newCursor, newCursor))
     }
 
     var draggingCursor: Cursor = Cursor.ZERO
@@ -410,8 +470,10 @@ object Controls {
 
     fun isInsideSelection(): Boolean {
         val lineStart = findLineAt(mouseY) ?: return false
-        val minCursor = minI(cursor0, cursor1)
-        val maxCursor = maxI(cursor0, cursor1)
+        return cursors.any { pair -> isInsideSelection(lineStart, pair.min, pair.max) }
+    }
+
+    private fun isInsideSelection(lineStart: LineStart, minCursor: Cursor, maxCursor: Cursor): Boolean {
         if (lineStart.lineIndex < minCursor.lineIndex || lineStart.lineIndex > maxCursor.lineIndex) {
             return false
         }
@@ -424,11 +486,11 @@ object Controls {
         val line = file.lines[lineStart.lineIndex]
         if (line.i0 == line.i1) return false // empty line
 
-        val firstOffset = line.getOffset(lineStart.i)
+        val firstOffset = line.getOffset(line.i0 + lineStart.relI)
         val searched = (mouseX - lineStart.whereIIsDrawnX + firstOffset)
         if (searched <= 0) return false // too far left
         // could be a binary search, but it doesn't matter, because this will be at max width/charWidth
-        for (i in lineStart.i until line.i1) {
+        for (i in line.i0 + lineStart.relI until line.i1) {
             val xi = line.getOffset(i)
             if (xi >= searched) return true
         }
@@ -444,10 +506,10 @@ object Controls {
         scrollY = (mouseY.toLong() * maxScrollY / windowHeight)
     }
 
-    fun copyContents(joined: String) {
-        val stringSelection = StringSelection(joined)
+    fun copyContents(joined: List<String>) {
         val clipboard = Toolkit.getDefaultToolkit().systemClipboard
-        clipboard.setContents(stringSelection, null)
+        val transferable = StringListTransferable(joined)
+        clipboard.setContents(transferable, null)
     }
 
     var isLeftDown = false
@@ -489,13 +551,13 @@ object Controls {
     fun showSearchResult(cursor: Cursor) {
         // set cursor
         cursor0 = cursor
-        cursor1 = Cursor(cursor.lineIndex, cursor.i + searched.text.length)
+        cursor1 = Cursor(cursor.lineIndex, cursor.relI + searched.text.length)
         scrollTo(cursor)
     }
 
     fun replaceSearchResult(cursor: Cursor) {
         showSearchResult(cursor)
-        highLevelPaste(replaced.text)
+        highLevelPaste(listOf(replaced.text))
         val tmp = ArrayList<Cursor>(searchResults)
         tmp.removeIf { it.lineIndex == cursor.lineIndex }
         val line = file.lines[cursor.lineIndex]
@@ -515,7 +577,7 @@ object Controls {
                     numLines += line.getNumLines(available)
                 } else {
                     // find the correct sub-index
-                    val subLine = line.subList(line.i0, cursor.i)
+                    val subLine = line.subLine(line.i0, line.i0 + cursor.relI)
                     numLines += subLine.getNumLines(available) - 1
                     break
                 }
@@ -559,7 +621,7 @@ object Controls {
             val i1 = line.text.indexOf(searched, i0, true)
             if (i1 < i0 || i1 >= line.i1) break
 
-            results.add(Cursor(lineIndex, i1))
+            results.add(Cursor(lineIndex, i1 - line.i0))
             i0 = i1 + searched.length
         }
     }

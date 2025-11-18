@@ -5,6 +5,7 @@ import me.anno.remtext.colors.Colors
 import me.anno.remtext.colors.Colors.DEFAULT
 import me.anno.remtext.colors.Languages
 import me.anno.remtext.editing.Cursor
+import me.anno.remtext.editing.CursorPair
 import me.anno.remtext.editing.History
 import me.anno.remtext.font.Line
 import me.anno.remtext.font.Line.Companion.fillOffsets
@@ -18,14 +19,28 @@ class OpenFile(val file: File) {
         const val MAX_FILE_LENGTH = 1_000_000_000
     }
 
-    var cursor0 = Cursor.ZERO
-    var cursor1 = Cursor.ZERO
-
     val language = Languages.highlighters[file.extension.lowercase()]
 
     init {
         println("Language for ${file.extension.lowercase()}: $language")
     }
+
+    var cursor0: Cursor
+        get() = cursors.lastOrNull()?.first ?: Cursor.ZERO
+        set(value) {
+            val last = cursors.removeLastOrNull() ?: CursorPair()
+            cursors.add(CursorPair(value, last.second))
+        }
+
+    var cursor1: Cursor
+        get() = cursors.lastOrNull()?.second ?: Cursor.ZERO
+        set(value) {
+            val last = cursors.removeLastOrNull() ?: CursorPair()
+            cursors.add(CursorPair(last.first, value))
+        }
+
+    val cursors = ArrayList<CursorPair>()
+        .apply { add(CursorPair()) }
 
     val lines = ArrayList<Line>()
     val history = History()

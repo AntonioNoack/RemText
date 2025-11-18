@@ -69,7 +69,7 @@ object MarkdownLanguage : Language {
                 // Delegate to the selected language for this line segment.
                 val lang = languages[langIndex - 1]
                 state = unpackLangState(state)
-                state = lang?.highlight(line.subList(i, line.i1), state) ?: state
+                state = lang?.highlight(line.subLine(i, line.i1), state) ?: state
                 val end = detectEndFenceSafely(line, i, "```", langIndex)
                 if (end > i) {
                     i = end

@@ -14,6 +14,8 @@ Supports basic syntax highlighting for
 - Markdown, Shell,
 - GLSL, HLSL.
 
+Support multi-cursor editing 😺.
+
 ## Controls
 - F1: toggle light/dark theme
 - F2: toggle wrapped lines
@@ -39,6 +41,8 @@ Supports basic syntax highlighting for
 - mouse-wheel: scroll
 - page-up/down: change font size
 - escape: exit search/replace; exit program
+- alt-shift-click: add another cursor where you clicked
+- double-control+up/down: add another cursor in the line above/below
 
 ## Planned Features
 - Save-as-menu?

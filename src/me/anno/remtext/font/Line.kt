@@ -23,6 +23,8 @@ class Line(
         if (offsets.size <= i1) throw IllegalArgumentException()
     }
 
+    val length: Int get() = i1 - i0
+
     companion object {
         fun fillOffsets(text: String, i0: Int, i1: Int, offsets: IntArray) {
             if (i0 >= offsets.size) return
@@ -93,7 +95,7 @@ class Line(
         fillOffsets(text, i0, i1, offsets)
     }
 
-    fun subList(i0: Int, i1: Int) = Line(text, i0, i1, offsets, colors)
+    fun subLine(i0: Int, i1: Int) = Line(text, i0, i1, offsets, colors)
 
     fun getNumLines(width: Int): Int {
         if (countedLinesW == width) {
