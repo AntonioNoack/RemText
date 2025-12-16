@@ -1,6 +1,5 @@
-package me.anno.remtext.colors
+package me.anno.remtext
 
-import me.anno.remtext.Window
 import me.anno.remtext.gfx.Color
 
 // todo load them from a config .txt file?
@@ -27,7 +26,7 @@ object Colors {
         val textColor = Color(0xffffaa)
         val commentColor = Color(0x8ACF24)
         val numberColor = Color(0x33BCCC)
-        val symbolColor = Color(0xBBBBBB)
+        val symbolColor = Color(0xE5836A)
         val keywordColor = Color(0xE5A440)
         val bracketColor = Color(0xC0A070)
         val stringColor = Color(0xA0CF7E)

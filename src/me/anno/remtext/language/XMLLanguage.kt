@@ -1,19 +1,18 @@
-package me.anno.remtext.colors.impl
+package me.anno.remtext.language
 
-import me.anno.remtext.colors.Colors.COLOR_BITS
-import me.anno.remtext.colors.Colors.COLOR_MASK
-import me.anno.remtext.colors.Colors.DEFAULT
-import me.anno.remtext.colors.Colors.KEYWORD
-import me.anno.remtext.colors.Colors.ML_COMMENT
-import me.anno.remtext.colors.Colors.ML_STRING
-import me.anno.remtext.colors.Colors.NUMBER
-import me.anno.remtext.colors.Colors.STRING
-import me.anno.remtext.colors.Colors.SYMBOL
-import me.anno.remtext.colors.Colors.VARIABLE
-import me.anno.remtext.colors.Language
+import me.anno.remtext.Colors.COLOR_BITS
+import me.anno.remtext.Colors.COLOR_MASK
+import me.anno.remtext.Colors.DEFAULT
+import me.anno.remtext.Colors.KEYWORD
+import me.anno.remtext.Colors.ML_COMMENT
+import me.anno.remtext.Colors.ML_STRING
+import me.anno.remtext.Colors.NUMBER
+import me.anno.remtext.Colors.STRING
+import me.anno.remtext.Colors.SYMBOL
+import me.anno.remtext.Colors.VARIABLE
 import me.anno.remtext.font.Line
-import me.anno.remtext.formatting.AutoFormatOptions
-import me.anno.remtext.formatting.XMLFormatter
+import me.anno.remtext.formatters.AutoFormatOptions
+import me.anno.remtext.formatters.XMLFormatter
 
 /**
  * ChatGPT-generated, and slightly adjusted

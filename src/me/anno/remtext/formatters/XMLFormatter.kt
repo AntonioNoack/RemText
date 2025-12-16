@@ -1,4 +1,4 @@
-package me.anno.remtext.formatting
+package me.anno.remtext.formatters
 
 import me.anno.remtext.font.Line
 import kotlin.math.max

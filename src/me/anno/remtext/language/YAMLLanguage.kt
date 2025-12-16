@@ -1,17 +1,14 @@
-package me.anno.remtext.colors.impl
+package me.anno.remtext.language
 
-import me.anno.remtext.colors.Colors
-import me.anno.remtext.colors.Colors.COMMENT
-import me.anno.remtext.colors.Colors.DEFAULT
-import me.anno.remtext.colors.Colors.KEYWORD
-import me.anno.remtext.colors.Colors.ML_STRING
-import me.anno.remtext.colors.Colors.NUMBER
-import me.anno.remtext.colors.Colors.STRING
-import me.anno.remtext.colors.Colors.SYMBOL
-import me.anno.remtext.colors.Colors.VARIABLE
-import me.anno.remtext.colors.Language
-import me.anno.remtext.colors.impl.CLikeLanguage.Companion.findEndOfNumber
-import me.anno.remtext.colors.impl.CLikeLanguage.Companion.findEndOfString
+import me.anno.remtext.Colors
+import me.anno.remtext.Colors.COMMENT
+import me.anno.remtext.Colors.DEFAULT
+import me.anno.remtext.Colors.KEYWORD
+import me.anno.remtext.Colors.ML_STRING
+import me.anno.remtext.Colors.NUMBER
+import me.anno.remtext.Colors.STRING
+import me.anno.remtext.Colors.SYMBOL
+import me.anno.remtext.Colors.VARIABLE
 import me.anno.remtext.font.Line
 import kotlin.math.max
 
@@ -91,7 +88,7 @@ object YAMLLanguage : Language {
                     // Quoted strings
                     if (text[i] == '"' || text[i] == '\'') {
                         val quote = text[i]
-                        val end = findEndOfString(line, i, quote)
+                        val end = CLikeLanguage.Companion.findEndOfString(line, i, quote)
                         colors.fill(STRING, i, end)
                         i = max(i + 1, end)
                         continue@loop
@@ -117,7 +114,7 @@ object YAMLLanguage : Language {
                     if (isWordChar(text[i]) || text[i] == '"' || text[i] == '\'') {
                         val tokenStart = i
                         if (text[i] == '"' || text[i] == '\'') {
-                            i = findEndOfString(line, i, text[i])
+                            i = CLikeLanguage.Companion.findEndOfString(line, i, text[i])
                         } else {
                             while (i < line.i1 && isWordChar(text[i])) i++
                         }
@@ -138,7 +135,7 @@ object YAMLLanguage : Language {
                             val lower = token.lowercase()
                             when {
                                 token.isNotEmpty() && (token[0].isDigit() || token[0] == '+' || token[0] == '-') -> {
-                                    val end = findEndOfNumber(line, tokenStart)
+                                    val end = CLikeLanguage.Companion.findEndOfNumber(line, tokenStart)
                                     colors.fill(NUMBER, tokenStart, end)
                                     i = max(i + 1, tokenEnd)
                                     continue@loop

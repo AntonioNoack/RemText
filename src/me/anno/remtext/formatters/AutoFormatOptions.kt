@@ -1,9 +1,9 @@
-package me.anno.remtext.formatting
+package me.anno.remtext.formatters
 
-import me.anno.remtext.colors.Language
-import me.anno.remtext.colors.impl.CLikeLanguage
-import me.anno.remtext.colors.impl.CLikeLanguageType
-import me.anno.remtext.colors.impl.XMLLanguage
+import me.anno.remtext.language.Language
+import me.anno.remtext.language.CLikeLanguage
+import me.anno.remtext.language.CLikeLanguageType
+import me.anno.remtext.language.XMLLanguage
 
 class AutoFormatOptions(val indentation: String, val lineBreakLength: Int) {
     companion object {

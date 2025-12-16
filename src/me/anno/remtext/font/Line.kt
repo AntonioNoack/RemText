@@ -1,6 +1,6 @@
 package me.anno.remtext.font
 
-import me.anno.remtext.colors.Colors
+import me.anno.remtext.Colors
 import kotlin.math.max
 import kotlin.math.min
 

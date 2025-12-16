@@ -1,22 +1,21 @@
-package me.anno.remtext.colors.impl
+package me.anno.remtext.language
 
-import me.anno.remtext.colors.Colors
-import me.anno.remtext.colors.Colors.BRACKET
-import me.anno.remtext.colors.Colors.COMMENT
-import me.anno.remtext.colors.Colors.DEFAULT
-import me.anno.remtext.colors.Colors.DOC_COMMENT
-import me.anno.remtext.colors.Colors.KEYWORD
-import me.anno.remtext.colors.Colors.ML_COMMENT
-import me.anno.remtext.colors.Colors.ML_STRING
-import me.anno.remtext.colors.Colors.NUMBER
-import me.anno.remtext.colors.Colors.STRING
-import me.anno.remtext.colors.Colors.SYMBOL
-import me.anno.remtext.colors.Colors.VARIABLE
-import me.anno.remtext.colors.Language
+import me.anno.remtext.Colors
+import me.anno.remtext.Colors.BRACKET
+import me.anno.remtext.Colors.COMMENT
+import me.anno.remtext.Colors.DEFAULT
+import me.anno.remtext.Colors.DOC_COMMENT
+import me.anno.remtext.Colors.KEYWORD
+import me.anno.remtext.Colors.ML_COMMENT
+import me.anno.remtext.Colors.ML_STRING
+import me.anno.remtext.Colors.NUMBER
+import me.anno.remtext.Colors.STRING
+import me.anno.remtext.Colors.SYMBOL
+import me.anno.remtext.Colors.VARIABLE
 import me.anno.remtext.font.Line
-import me.anno.remtext.formatting.AutoFormatOptions
-import me.anno.remtext.formatting.CLikeFormatter
-import me.anno.remtext.formatting.JsonFormatter
+import me.anno.remtext.formatters.AutoFormatOptions
+import me.anno.remtext.formatters.CLikeFormatter
+import me.anno.remtext.formatters.JsonFormatter
 
 /**
  * Unified syntax highlighter for multiple C-like languages
@@ -34,6 +33,17 @@ class CLikeLanguage(val type: CLikeLanguageType) : Language {
                     '\\' -> i++
                     symbol -> return i
                 }
+            }
+            return line.i1
+        }
+
+        fun findEndOfAnnotation(line: Line, start: Int): Int {
+            val text = line.text
+            var i = start + 1
+            while (i < line.i1) {
+                val c = text[i]
+                if (c.isLetterOrDigit() || c in "_") i++
+                else return i
             }
             return line.i1
         }
@@ -286,6 +296,11 @@ class CLikeLanguage(val type: CLikeLanguageType) : Language {
                                 i = end
                             }
                             in ";,/*<>%&|!?=:+-" -> colors[i++] = SYMBOL
+                            '@' -> {
+                                val end = findEndOfAnnotation(line, i + 1)
+                                colors.fill(DEFAULT, i, end)
+                                i = end
+                            }
                             in "([{" -> colors[i++] = BRACKET
                             in ")]}" -> colors[i++] = BRACKET
                             in 'A'..'Z', in 'a'..'z' -> {

@@ -1,6 +1,4 @@
-package me.anno.remtext.colors
-
-import me.anno.remtext.colors.impl.*
+package me.anno.remtext.language
 
 object Languages {
 
@@ -28,8 +26,10 @@ object Languages {
         highlighters["bat"] = BatchLanguage
         highlighters["css"] = CSSLanguage
         highlighters["yml"] = YAMLLanguage
+        highlighters["toml"] = TOMLLanguage
         highlighters["csv"] = CSVLanguage
         highlighters["md"] = MarkdownLanguage
+        highlighters["ziggy"] = ZiggyLanguage
         alias("yml", "yaml")
         alias("js", "javascript")
         alias("kt", "kotlin")
@@ -40,6 +40,8 @@ object Languages {
         alias("cpp", "hpp")
         alias("glsl", "vert", "frag", "geo")
         alias("md", "markdown")
+        alias("ziggy", "zon")
+        alias("toml", "desktop")
     }
 
     fun alias(src: String, vararg aliases: String) {

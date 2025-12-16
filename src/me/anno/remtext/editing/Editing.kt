@@ -7,7 +7,7 @@ import me.anno.remtext.Rendering.cursors
 import me.anno.remtext.Rendering.file
 import me.anno.remtext.Window.WINDOW_TITLE
 import me.anno.remtext.Window.window
-import me.anno.remtext.colors.Colors.DEFAULT
+import me.anno.remtext.Colors.DEFAULT
 import me.anno.remtext.font.Font.lineHeight
 import me.anno.remtext.font.Line
 import org.lwjgl.glfw.GLFW.glfwSetWindowTitle

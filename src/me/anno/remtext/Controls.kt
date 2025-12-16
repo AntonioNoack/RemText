@@ -28,7 +28,7 @@ import me.anno.remtext.editing.StringListTransferable.Companion.stringListFlavor
 import me.anno.remtext.font.Font
 import me.anno.remtext.font.Font.lineHeight
 import me.anno.remtext.font.Line
-import me.anno.remtext.formatting.AutoFormatOptions
+import me.anno.remtext.formatters.AutoFormatOptions
 import org.lwjgl.glfw.GLFW.*
 import java.awt.Toolkit
 import java.awt.datatransfer.DataFlavor

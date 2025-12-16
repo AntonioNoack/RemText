@@ -1,4 +1,4 @@
-package me.anno.remtext.colors.impl
+package me.anno.remtext.language
 
 class KeywordMap(keywords: List<String>, ignoreCase: Boolean) {
 

@@ -1,6 +1,6 @@
-package me.anno.remtext.colors.impl
+package me.anno.remtext.language
 
-import me.anno.remtext.colors.impl.CLikeLanguage.Companion.splitKeywords
+import me.anno.remtext.language.CLikeLanguage.Companion.splitKeywords
 
 enum class CLikeLanguageType {
     C, CPP, C_OR_CPP, JAVA, CSHARP, GLSL, HLSL, GO,
@@ -107,8 +107,8 @@ enum class CLikeLanguageType {
                     "unowned,var,weak,where,while,yield"
 
             ZIG -> "abort,align,asm,async,await,break,catch,comptime,const,continue,defer,else,enum,error," +
-                    "export,extern,false,fn,if,import,in,inline,linksection,opaque,or,panic,packed,return,suspend," +
-                    "switch,true,struct,undefined,union,var,volatile,while"
+                    "export,extern,false,fn,if,import,in,inline,linksection,opaque,or,panic,packed,pub,return,suspend," +
+                    "switch,test,true,try,struct,undefined,union,var,void,volatile,while"
         }.splitKeywords(false)
     }
 

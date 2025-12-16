@@ -1,15 +1,12 @@
-package me.anno.remtext.colors.impl
+package me.anno.remtext.language
 
-import me.anno.remtext.colors.Colors.COMMENT
-import me.anno.remtext.colors.Colors.DEFAULT
-import me.anno.remtext.colors.Colors.NUMBER
-import me.anno.remtext.colors.Colors.STRING
-import me.anno.remtext.colors.Colors.VARIABLE
-import me.anno.remtext.colors.Language
-import me.anno.remtext.colors.impl.CLikeLanguage.Companion.findEndOfNumber
-import me.anno.remtext.colors.impl.CLikeLanguage.Companion.findEndOfString
-import me.anno.remtext.colors.impl.CLikeLanguage.Companion.readKeywords
-import me.anno.remtext.colors.impl.CLikeLanguage.Companion.splitKeywords
+import me.anno.remtext.Colors.COMMENT
+import me.anno.remtext.Colors.DEFAULT
+import me.anno.remtext.Colors.NUMBER
+import me.anno.remtext.Colors.STRING
+import me.anno.remtext.Colors.VARIABLE
+import me.anno.remtext.language.CLikeLanguage.Companion.readKeywords
+import me.anno.remtext.language.CLikeLanguage.Companion.splitKeywords
 import me.anno.remtext.font.Line
 
 object BatchLanguage : Language {
@@ -36,12 +33,12 @@ object BatchLanguage : Language {
                     colors.fill(VARIABLE, start, i)
                 }
                 text[i] == '"' -> { // Strings (double quotes)
-                    val end = findEndOfString(line, i, '"')
+                    val end = CLikeLanguage.Companion.findEndOfString(line, i, '"')
                     colors.fill(STRING, i, end)
                     i = end
                 }
                 text[i].isDigit() -> { // Numbers
-                    val end = findEndOfNumber(line, i)
+                    val end = CLikeLanguage.Companion.findEndOfNumber(line, i)
                     colors.fill(NUMBER, i, end)
                     i = end
                 }

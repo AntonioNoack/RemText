@@ -1,14 +1,12 @@
-package me.anno.remtext.colors.impl
+package me.anno.remtext.language
 
-import me.anno.remtext.colors.Colors.BRACKET
-import me.anno.remtext.colors.Colors.DEFAULT
-import me.anno.remtext.colors.Colors.ML_COMMENT
-import me.anno.remtext.colors.Colors.NUMBER
-import me.anno.remtext.colors.Colors.STRING
-import me.anno.remtext.colors.Colors.SYMBOL
-import me.anno.remtext.colors.Colors.VARIABLE
-import me.anno.remtext.colors.Language
-import me.anno.remtext.colors.impl.CLikeLanguage.Companion.isHexChar
+import me.anno.remtext.Colors.BRACKET
+import me.anno.remtext.Colors.DEFAULT
+import me.anno.remtext.Colors.ML_COMMENT
+import me.anno.remtext.Colors.NUMBER
+import me.anno.remtext.Colors.STRING
+import me.anno.remtext.Colors.SYMBOL
+import me.anno.remtext.Colors.VARIABLE
 import me.anno.remtext.font.Line
 
 object CSSLanguage : Language {
@@ -44,7 +42,7 @@ object CSSLanguage : Language {
     private fun findEndOfColor(line: Line, start: Int): Int {
         val text = line.text
         var i = start + 1
-        while (i < line.i1 && isHexChar(text[i])) i++
+        while (i < line.i1 && CLikeLanguage.Companion.isHexChar(text[i])) i++
         return i
     }
 
@@ -79,7 +77,7 @@ object CSSLanguage : Language {
                             i = end
                         }
                         // Color codes starting with #
-                        text[i] == '#' && i + 1 < line.i1 && isHexChar(text[i + 1]) -> {
+                        text[i] == '#' && i + 1 < line.i1 && CLikeLanguage.Companion.isHexChar(text[i + 1]) -> {
 
                             // not ideal...
                             val i0 = line.indexOf(';', i).let { if (it < 0) line.i1 else it }

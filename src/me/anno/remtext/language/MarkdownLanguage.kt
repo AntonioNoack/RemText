@@ -1,21 +1,16 @@
-package me.anno.remtext.colors.impl
+package me.anno.remtext.language
 
-import me.anno.remtext.colors.Colors
-import me.anno.remtext.colors.Colors.BRACKET
-import me.anno.remtext.colors.Colors.COMMENT
-import me.anno.remtext.colors.Colors.DEFAULT
-import me.anno.remtext.colors.Colors.KEYWORD
-import me.anno.remtext.colors.Colors.ML_COMMENT
-import me.anno.remtext.colors.Colors.ML_STRING
-import me.anno.remtext.colors.Colors.NUMBER
-import me.anno.remtext.colors.Colors.STRING
-import me.anno.remtext.colors.Colors.SYMBOL
-import me.anno.remtext.colors.Colors.VARIABLE
-import me.anno.remtext.colors.Language
-import me.anno.remtext.colors.Languages
-import me.anno.remtext.colors.impl.XMLLanguage.Companion.packState
-import me.anno.remtext.colors.impl.XMLLanguage.Companion.unpackLang
-import me.anno.remtext.colors.impl.XMLLanguage.Companion.unpackLangState
+import me.anno.remtext.Colors
+import me.anno.remtext.Colors.BRACKET
+import me.anno.remtext.Colors.COMMENT
+import me.anno.remtext.Colors.DEFAULT
+import me.anno.remtext.Colors.KEYWORD
+import me.anno.remtext.Colors.ML_COMMENT
+import me.anno.remtext.Colors.ML_STRING
+import me.anno.remtext.Colors.NUMBER
+import me.anno.remtext.Colors.STRING
+import me.anno.remtext.Colors.SYMBOL
+import me.anno.remtext.Colors.VARIABLE
 import me.anno.remtext.font.Line
 
 object MarkdownLanguage : Language {
@@ -45,7 +40,7 @@ object MarkdownLanguage : Language {
             if (colors[p] != ML_COMMENT) {
                 // pack delegate colors for the range (so they remain associated with the lang)
                 for (j in i0 until p) {
-                    colors[j] = packState(langIndex, colors[j])
+                    colors[j] = XMLLanguage.Companion.packState(langIndex, colors[j])
                 }
                 // mark fence itself (e.g., ``` ) as KEYWORD
                 colors.fill(KEYWORD, p, p + fence.length)
@@ -64,11 +59,11 @@ object MarkdownLanguage : Language {
         var i = line.i0
 
         loop@ while (i < line.i1) {
-            val langIndex = unpackLang(state)
+            val langIndex = XMLLanguage.Companion.unpackLang(state)
             if (langIndex != 0) {
                 // Delegate to the selected language for this line segment.
                 val lang = languages[langIndex - 1]
-                state = unpackLangState(state)
+                state = XMLLanguage.Companion.unpackLangState(state)
                 state = lang?.highlight(line.subLine(i, line.i1), state) ?: state
                 val end = detectEndFenceSafely(line, i, "```", langIndex)
                 if (end > i) {
@@ -78,7 +73,7 @@ object MarkdownLanguage : Language {
                     continue@loop
                 } else {
                     // no closing fence this line — store packed state and finish
-                    state = packState(langIndex, state)
+                    state = XMLLanguage.Companion.packState(langIndex, state)
                     // i = line.i1
                     break@loop
                 }
@@ -113,7 +108,7 @@ object MarkdownLanguage : Language {
                         // Delegate to the language mapped to langId
                         // Mark the opening fence as KEYWORD and pack the state
                         colors.fill(KEYWORD, fenceStart, i)
-                        state = packState(mappedIndex, DEFAULT)
+                        state = XMLLanguage.Companion.packState(mappedIndex, DEFAULT)
                         // the inner content will be handled on subsequent lines (or rest of this line)
                         break@loop
                     } else {

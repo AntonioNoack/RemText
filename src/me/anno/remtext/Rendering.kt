@@ -16,7 +16,7 @@ import me.anno.remtext.Window.isDarkTheme
 import me.anno.remtext.Window.window
 import me.anno.remtext.Window.windowHeight
 import me.anno.remtext.Window.windowWidth
-import me.anno.remtext.colors.Colors
+import me.anno.remtext.Colors
 import me.anno.remtext.editing.Cursor
 import me.anno.remtext.editing.InputMode
 import me.anno.remtext.editing.LineStart

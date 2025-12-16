@@ -1,8 +1,8 @@
-package me.anno.remtext.colors
+package me.anno.remtext.language
 
-import me.anno.remtext.colors.Colors.DEFAULT
+import me.anno.remtext.Colors.DEFAULT
 import me.anno.remtext.font.Line
-import me.anno.remtext.formatting.AutoFormatOptions
+import me.anno.remtext.formatters.AutoFormatOptions
 
 interface Language {
     fun highlight(line: Line, state0: Byte): Byte

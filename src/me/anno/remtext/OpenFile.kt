@@ -1,8 +1,8 @@
 package me.anno.remtext
 
 import me.anno.remtext.Rendering.countedLinesW
-import me.anno.remtext.colors.Colors.DEFAULT
-import me.anno.remtext.colors.Languages
+import me.anno.remtext.Colors.DEFAULT
+import me.anno.remtext.language.Languages
 import me.anno.remtext.editing.Cursor
 import me.anno.remtext.editing.CursorPair
 import me.anno.remtext.editing.History
