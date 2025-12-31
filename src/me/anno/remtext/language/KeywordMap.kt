@@ -1,14 +1,14 @@
 package me.anno.remtext.language
 
-class KeywordMap(keywords: List<String>, ignoreCase: Boolean) {
+class KeywordMap(val flatList: List<String>, ignoreCase: Boolean) {
 
-    private val char0 = keywords.minOf {
+    private val char0 = flatList.minOf {
         if (ignoreCase) it[0].uppercaseChar()
         else it[0]
     }.code
 
     private val entries = arrayOfNulls<ArrayList<String>>(
-        keywords.maxOf { it[0] }.code + 1 - char0
+        flatList.maxOf { it[0] }.code + 1 - char0
     )
 
     private fun put(char: Int, keyword: String) {
@@ -21,10 +21,10 @@ class KeywordMap(keywords: List<String>, ignoreCase: Boolean) {
     }
 
     init {
-        for (keyword in keywords) {
+        for (keyword in flatList) {
             put(keyword[0].code - char0, keyword)
         }
-        if (ignoreCase) for (keyword in keywords) {
+        if (ignoreCase) for (keyword in flatList) {
             put(keyword[0].uppercaseChar().code - char0, keyword)
         }
     }
@@ -33,5 +33,7 @@ class KeywordMap(keywords: List<String>, ignoreCase: Boolean) {
         val index = char.code - char0
         return entries.getOrNull(index)
     }
+
+    fun flatten() = flatList
 
 }

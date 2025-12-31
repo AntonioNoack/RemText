@@ -30,6 +30,7 @@ object Languages {
         highlighters["csv"] = CSVLanguage
         highlighters["md"] = MarkdownLanguage
         highlighters["ziggy"] = ZiggyLanguage
+        highlighters["rpy"] = RenPyLanguage
         alias("yml", "yaml")
         alias("js", "javascript")
         alias("kt", "kotlin")
@@ -42,6 +43,7 @@ object Languages {
         alias("md", "markdown")
         alias("ziggy", "zon")
         alias("toml", "desktop")
+        alias("rpy", "renpy")
     }
 
     fun alias(src: String, vararg aliases: String) {
