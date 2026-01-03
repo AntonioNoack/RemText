@@ -42,7 +42,7 @@ object Languages {
         alias("glsl", "vert", "frag", "geo")
         alias("md", "markdown")
         alias("ziggy", "zon")
-        alias("toml", "desktop")
+        alias("toml", "desktop", "cfg")
         alias("rpy", "renpy")
     }
 
