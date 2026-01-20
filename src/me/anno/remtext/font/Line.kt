@@ -1,29 +1,15 @@
 package me.anno.remtext.font
 
 import me.anno.remtext.Colors
+import kotlin.experimental.and
 import kotlin.math.max
 import kotlin.math.min
 
 class Line(
     val text: String, val i0: Int, val i1: Int,
     private val offsets: IntArray,
-    val colors: ByteArray?,
+    val colors: ByteArray?
 ) {
-
-    constructor(text: String) : this(
-        text, 0, text.length,
-        IntArray(text.length + 1),
-        ByteArray(text.length + 1),
-    ) {
-        fillOffsets(text, i0, i1, offsets)
-    }
-
-    init {
-        if (i0 !in 0..i1 || i1 > text.length) throw IllegalArgumentException()
-        if (offsets.size <= i1) throw IllegalArgumentException()
-    }
-
-    val length: Int get() = i1 - i0
 
     companion object {
         fun fillOffsets(text: String, i0: Int, i1: Int, offsets: IntArray) {
@@ -47,7 +33,25 @@ class Line(
                 if (offsets[i] != x) throw IllegalArgumentException("Mismatch! $i:$x vs ${offsets[i]}")
             }
         }
+
+        val COLLAPSE_LIMIT = 1 shl 20
     }
+
+    constructor(text: String) : this(
+        text, 0, text.length,
+        IntArray(text.length + 1),
+        ByteArray(text.length + 1)
+    ) {
+        fillOffsets(text, i0, i1, offsets)
+    }
+
+    init {
+        if (i0 !in 0..i1 || i1 > text.length) throw IllegalArgumentException()
+        if (offsets.size <= i1) throw IllegalArgumentException()
+    }
+
+    val length: Int get() = i1 - i0
+    var depth = -1
 
     fun getOffset(i: Int): Int = offsets[i] - offsets[i0]
     fun getWidth(i: Int): Int = offsets[i + 1] - offsets[i]
@@ -83,14 +87,14 @@ class Line(
         validateOffsets(joinedText, 0, joinedText.length, joinedOffset)
         return Line(
             joinedText, 0, joinedText.length, joinedOffset,
-            ByteArray(joinedText.length + 1),
+            ByteArray(joinedText.length + 1)
         )
     }
 
     private var countedLinesAtW = 0
     private var countedLinesW = 0
 
-    fun recalculate() {
+    fun recalculateOffsets() {
         countedLinesW = 0
         fillOffsets(text, i0, i1, offsets)
     }
@@ -140,22 +144,64 @@ class Line(
         return -1
     }
 
-    fun startsWith(prefix: String, i0: Int, ignoreCase: Boolean = false): Boolean {
+    fun startsWith(prefix: String, i0: Int = this.i0, ignoreCase: Boolean = false): Boolean {
         return i0 >= this.i0 && i0 + prefix.length <= i1 && text.startsWith(prefix, i0, ignoreCase)
     }
 
     fun isString(i: Int): Boolean {
         if (i !in i0..<i1) return false
         val colors = colors ?: return false
-        val color = colors[i and Colors.COLOR_MASK]
+        val color = colors[i] and Colors.COLOR_MASK.toByte()
         return color == Colors.STRING || color == Colors.ML_STRING
     }
 
     fun isComment(i: Int): Boolean {
         if (i !in i0..<i1) return false
         val colors = colors ?: return false
-        val color = colors[i and Colors.COLOR_MASK]
+        val color = colors[i] and Colors.COLOR_MASK.toByte()
         return color == Colors.COMMENT || color == Colors.ML_COMMENT || color == Colors.TODO
+    }
+
+    fun countIndentation(): Int {
+        for (depth in 0 until min(i1 - i0, COLLAPSE_LIMIT)) {
+            if (!text[i0 + depth].isWhitespace()) return depth
+        }
+        return -1
+    }
+
+    fun countBracketDeltaDepth(): Int {
+        var delta = 0
+        val i1 = min(i0 + COLLAPSE_LIMIT, i1)
+        for (i in i0 until i1) {
+            if (isComment(i) || isString(i)) continue
+            when (text[i]) {
+                '(', '[', '{' -> delta++
+                ')', ']', '}' -> delta--
+            }
+        }
+        return delta
+    }
+
+    fun countXMLDelta(): Int {
+        var delta = 0
+        val i1 = min(i0 + COLLAPSE_LIMIT, i1 - 1)
+        for (i in i0 until i1) {
+            if (isComment(i) || isString(i)) continue
+            if (text[i] == '<' && text[i + 1] != '/') delta++
+            else if (text[i] == '<') delta--
+            else if (text[i] == '/' && text[i + 1] == '>') delta--
+        }
+        return delta
+    }
+
+    fun countMarkdownDepth(): Int {
+        // todo for code blocks, this depends on the language
+        val i1 = min(i0 + COLLAPSE_LIMIT, i1)
+        for (i in i0 until i1) {
+            if (isComment(i) || isString(i)) return -1
+            if (text[i] != '#') return i - i0
+        }
+        return -1
     }
 
 }

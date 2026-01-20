@@ -6,6 +6,7 @@ import me.anno.remtext.Colors.DEFAULT
 import me.anno.remtext.Colors.NUMBER
 import me.anno.remtext.Colors.STRING
 import me.anno.remtext.Colors.VARIABLE
+import me.anno.remtext.blocks.BlockStyle
 import me.anno.remtext.language.CLikeLanguage.Companion.readKeywords
 import me.anno.remtext.language.CLikeLanguage.Companion.splitKeywords
 import me.anno.remtext.font.Line
@@ -79,5 +80,6 @@ object ShellLanguage : Language {
         return state
     }
 
+    override fun getBlockStyle() = BlockStyle.INDENTATION
     override fun toString(): String = "Shell"
 }

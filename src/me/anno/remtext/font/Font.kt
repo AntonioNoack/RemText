@@ -134,7 +134,7 @@ object Font {
         // clear line-count cache in lines & recalculate offsets
         val lines = Rendering.file.lines
         for (i in lines.indices) {
-            lines[i].recalculate()
+            lines[i].recalculateOffsets()
         }
     }
 

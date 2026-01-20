@@ -8,6 +8,7 @@ import me.anno.remtext.Colors.NUMBER
 import me.anno.remtext.Colors.STRING
 import me.anno.remtext.Colors.SYMBOL
 import me.anno.remtext.Colors.VARIABLE
+import me.anno.remtext.blocks.BlockStyle
 import me.anno.remtext.font.Line
 import me.anno.remtext.formatters.AutoFormatOptions
 import me.anno.remtext.language.CLikeLanguage.Companion.findEndOfNumber
@@ -88,5 +89,6 @@ object RenPyLanguage : Language {
     }
 
     override fun format(lines: List<Line>, options: AutoFormatOptions): List<Line>? = null
+    override fun getBlockStyle() = BlockStyle.INDENTATION
     override fun toString(): String = "RenPy"
 }

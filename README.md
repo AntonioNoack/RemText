@@ -14,7 +14,7 @@ Supports basic syntax highlighting for
 - Markdown, Shell,
 - GLSL, HLSL.
 
-Support multi-cursor editing 😺.
+Supports multi-cursor editing 😺.
 
 ## Controls
 - F1: toggle light/dark theme
@@ -43,6 +43,7 @@ Support multi-cursor editing 😺.
 - escape: exit search/replace; exit program
 - alt-shift-click: add another cursor where you clicked
 - double-control+up/down: add another cursor in the line above/below
+- mouse-click/control-plus/control-minus: (un)collapse block
 
 ## Planned Features
 - Save-as-menu?

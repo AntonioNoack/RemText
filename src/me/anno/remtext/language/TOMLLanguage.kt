@@ -10,6 +10,7 @@ import me.anno.remtext.Colors.NUMBER
 import me.anno.remtext.Colors.STRING
 import me.anno.remtext.Colors.SYMBOL
 import me.anno.remtext.Colors.VARIABLE
+import me.anno.remtext.blocks.BlockStyle
 import me.anno.remtext.font.Line
 import kotlin.math.max
 
@@ -129,5 +130,6 @@ object TOMLLanguage : Language {
         return state
     }
 
+    override fun getBlockStyle() = BlockStyle.TOML
     override fun toString(): String = "TOML"
 }

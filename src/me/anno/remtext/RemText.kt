@@ -6,7 +6,6 @@ import me.anno.remtext.Window.createWindow
 import java.io.File
 
 // todo:
-//  block folding: if line ends on {[(, count until we reach the opposite, folding them...
 //  multiple open files? / new file menu?
 //  monospaced-mode
 

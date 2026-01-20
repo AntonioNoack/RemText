@@ -12,6 +12,7 @@ import me.anno.remtext.Window.lightThemeFile
 import me.anno.remtext.Window.window
 import me.anno.remtext.Window.windowHeight
 import me.anno.remtext.Window.windowWidth
+import me.anno.remtext.blocks.CollapsedBlock
 import me.anno.remtext.editing.*
 import me.anno.remtext.editing.Editing.cursorDown
 import me.anno.remtext.editing.Editing.cursorLeft
@@ -64,11 +65,23 @@ object Controls {
     var lastPressedControl = 0L
     var isDoubleControlDown = false
 
+    private fun onScroll(dx: Double, dy: Double) {
+        val deltaY = (dy.toFloat() * 20f).toInt() // truncate
+        if (deltaY != 0) {
+            if (isControlDown) {
+                if (deltaY > 0) Font.inc()
+                else Font.dec()
+            }
+            if (isShiftDown) scrollX -= deltaY
+            else scrollY -= deltaY
+        }
+        // todo check sign on my touch laptop
+        scrollX += (dx.toFloat() * 20f).toInt()
+    }
+
     fun addListeners() {
-        glfwSetScrollCallback(window) { _, _, dy ->
-            val delta = (dy.toFloat() * 20f).toInt()
-            if (isShiftDown) scrollX -= delta
-            else scrollY -= delta
+        glfwSetScrollCallback(window) { _, dx, dy ->
+            onScroll(dx, dy)
         }
         glfwSetKeyCallback(window) { _, key, _, action, _ ->
             // action: GLFW_PRESS, GLFW_RELEASE or GLFW_REPEAT
@@ -309,6 +322,24 @@ object Controls {
                         } else scrollY += lineHeight
                     } else showNextSearchResult()
                 }
+                GLFW_KEY_MINUS, GLFW_KEY_KP_SUBTRACT -> {
+                    if (isControlDown) {
+                        if (isShiftDown) {
+                            collapseAllBlocks()
+                        } else {
+                            collapseCurrBlock()
+                        }
+                    }
+                }
+                GLFW_KEY_KP_ADD -> {
+                    if (isControlDown) {
+                        if (isShiftDown) {
+                            uncollapseAllBlocks()
+                        } else {
+                            uncollapseCurrBlock()
+                        }
+                    }
+                }
             }
         }
         glfwSetCharCallback(window) { _, char ->
@@ -458,11 +489,76 @@ object Controls {
     val mouseHasMoved get() = movedSinceLeftPress >= 10f
 
     fun setCursorByMouse() {
+        if (mouseX < lineHeight * 2) {
+            handleCollapseClick()
+            return
+        }
+
         blink0 = System.nanoTime()
 
         val newCursor = getCursorPosition(mouseX, mouseY)
         cursors.clear()
         cursors.add(CursorPair(newCursor, newCursor))
+    }
+
+    fun collapseAllBlocks() {
+        val file = file
+        val lines = file.lines
+        val style = file.language?.getBlockStyle() ?: return
+
+        val collapsed = file.collapsedBlocks
+        collapsed.clear()
+
+        var lineIndex = 0
+        while (lineIndex < lines.size) {
+            val endIndex = style.findEndOfCollapse(Rendering.file.lines, lineIndex)
+            if (endIndex > lineIndex) {
+                collapsed.add(CollapsedBlock(lineIndex, endIndex))
+                lineIndex = endIndex + 1
+            } else lineIndex++
+        }
+    }
+
+    fun uncollapseAllBlocks() {
+        file.collapsedBlocks.clear()
+    }
+
+    fun collapseCurrBlock() {
+        // todo try and collapse all in range??
+        for (cursor in cursors) {
+            collapseLine(cursor.first.lineIndex)
+        }
+    }
+
+    fun collapseLine(lineIndex: Int) {
+        val style = file.language?.getBlockStyle() ?: return
+        if (file.collapsedBlocks.none { it.isCollapsed(lineIndex) }) {
+            val endIndex = style.findEndOfCollapse(file.lines, lineIndex)
+            if (endIndex > lineIndex) {
+                file.collapsedBlocks.add(CollapsedBlock(lineIndex, endIndex))
+            }
+        }
+    }
+
+    fun uncollapseCurrBlock() {
+        // todo try and uncollapse all in range??
+        file.collapsedBlocks.removeIf { block ->
+            cursors.any { cursor ->
+                block.isCollapsed(cursor.first.lineIndex + 1)
+            }
+        }
+    }
+
+    fun handleCollapseClick() {
+        val line = findLineAt(mouseY) ?: return
+        val alreadyCollapsed = file.collapsedBlocks
+            .indexOfFirst { it.startIndex == line.lineIndex }
+        if (alreadyCollapsed >= 0) {
+            // uncollapse block
+            file.collapsedBlocks.removeAt(alreadyCollapsed)
+        } else if (line.canCollapseBlock) {
+            collapseLine(line.lineIndex)
+        }
     }
 
     var draggingCursor: Cursor = Cursor.ZERO

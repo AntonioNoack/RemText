@@ -11,6 +11,7 @@ import me.anno.remtext.Colors.NUMBER
 import me.anno.remtext.Colors.STRING
 import me.anno.remtext.Colors.SYMBOL
 import me.anno.remtext.Colors.VARIABLE
+import me.anno.remtext.blocks.BlockStyle
 import me.anno.remtext.font.Line
 
 object MarkdownLanguage : Language {
@@ -59,11 +60,11 @@ object MarkdownLanguage : Language {
         var i = line.i0
 
         loop@ while (i < line.i1) {
-            val langIndex = XMLLanguage.Companion.unpackLang(state)
+            val langIndex = XMLLanguage.unpackLang(state)
             if (langIndex != 0) {
                 // Delegate to the selected language for this line segment.
                 val lang = languages[langIndex - 1]
-                state = XMLLanguage.Companion.unpackLangState(state)
+                state = XMLLanguage.unpackLangState(state)
                 state = lang?.highlight(line.subLine(i, line.i1), state) ?: state
                 val end = detectEndFenceSafely(line, i, "```", langIndex)
                 if (end > i) {
@@ -73,7 +74,7 @@ object MarkdownLanguage : Language {
                     continue@loop
                 } else {
                     // no closing fence this line — store packed state and finish
-                    state = XMLLanguage.Companion.packState(langIndex, state)
+                    state = XMLLanguage.packState(langIndex, state)
                     // i = line.i1
                     break@loop
                 }
@@ -237,6 +238,8 @@ object MarkdownLanguage : Language {
         colors[line.i1] = state
         return state
     }
+
+    override fun getBlockStyle() = BlockStyle.MARKDOWN
 
     override fun toString(): String = "Markdown"
 }

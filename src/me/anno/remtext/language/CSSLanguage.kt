@@ -7,6 +7,7 @@ import me.anno.remtext.Colors.NUMBER
 import me.anno.remtext.Colors.STRING
 import me.anno.remtext.Colors.SYMBOL
 import me.anno.remtext.Colors.VARIABLE
+import me.anno.remtext.blocks.BlockStyle
 import me.anno.remtext.font.Line
 
 object CSSLanguage : Language {
@@ -132,6 +133,8 @@ object CSSLanguage : Language {
         colors[line.i1] = state
         return state
     }
+
+    override fun getBlockStyle() = BlockStyle.BRACKETS
 
     override fun toString(): String = "CSS"
 }

@@ -1,13 +1,15 @@
 package me.anno.remtext
 
-import me.anno.remtext.Rendering.countedLinesW
 import me.anno.remtext.Colors.DEFAULT
-import me.anno.remtext.language.Languages
+import me.anno.remtext.Rendering.countedLinesW
+import me.anno.remtext.blocks.BlockStyle.Companion.calculateDepth
+import me.anno.remtext.blocks.CollapsedBlock
 import me.anno.remtext.editing.Cursor
 import me.anno.remtext.editing.CursorPair
 import me.anno.remtext.editing.History
 import me.anno.remtext.font.Line
 import me.anno.remtext.font.Line.Companion.fillOffsets
+import me.anno.remtext.language.Languages
 import java.io.File
 import kotlin.concurrent.thread
 import kotlin.math.min
@@ -44,6 +46,8 @@ class OpenFile(val file: File) {
     val lines = ArrayList<Line>()
     val history = History()
 
+    val collapsedBlocks = ArrayList<CollapsedBlock>()
+
     var wrapLines = true
 
     var finished = false
@@ -73,6 +77,7 @@ class OpenFile(val file: File) {
 
             var i0 = 0
             var state = DEFAULT
+            val blockStyle = language?.getBlockStyle()
             while (i0 < text.length) {
                 var i1 = text.indexOf('\n', i0)
                 if (i1 < 0) i1 = text.length
@@ -86,6 +91,7 @@ class OpenFile(val file: File) {
                 if (language != null) {
                     colors!!.fill(DEFAULT, i0, i1 + 1)
                     state = language.highlight(line, state)
+                    line.depth = blockStyle.calculateDepth(line)
                 }
 
                 lines.add(line)

@@ -10,6 +10,7 @@ import me.anno.remtext.Colors.NUMBER
 import me.anno.remtext.Colors.STRING
 import me.anno.remtext.Colors.SYMBOL
 import me.anno.remtext.Colors.VARIABLE
+import me.anno.remtext.blocks.BlockStyle
 import me.anno.remtext.font.Line
 import me.anno.remtext.formatters.AutoFormatOptions
 import me.anno.remtext.formatters.XMLFormatter
@@ -287,6 +288,8 @@ class XMLLanguage(val isHTML: Boolean = false) : Language {
     override fun format(lines: List<Line>, options: AutoFormatOptions): List<Line> {
         return XMLFormatter.format(lines, options.indentation, isHTML)
     }
+
+    override fun getBlockStyle() = BlockStyle.XML
 
     override fun toString(): String {
         return if (isHTML) "HTML" else "XML"

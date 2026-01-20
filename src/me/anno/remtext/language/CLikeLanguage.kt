@@ -12,6 +12,7 @@ import me.anno.remtext.Colors.NUMBER
 import me.anno.remtext.Colors.STRING
 import me.anno.remtext.Colors.SYMBOL
 import me.anno.remtext.Colors.VARIABLE
+import me.anno.remtext.blocks.BlockStyle
 import me.anno.remtext.font.Line
 import me.anno.remtext.formatters.AutoFormatOptions
 import me.anno.remtext.formatters.CLikeFormatter
@@ -23,7 +24,7 @@ import me.anno.remtext.formatters.JsonFormatter
 class CLikeLanguage(val type: CLikeLanguageType) : Language {
     companion object {
 
-        fun isLetter(c: Char) = c.isLetterOrDigit() || c in "_$"
+        fun Char.isLetter1() = isLetterOrDigit() || this in "_$"
 
         fun findEndOfString(line: Line, start: Int, symbol: Char): Int {
             val text = line.text
@@ -158,7 +159,7 @@ class CLikeLanguage(val type: CLikeLanguageType) : Language {
             if (keywords != null) for (keyword in keywords) {
                 val i1 = i0 + keyword.length
                 if (startsWith(keyword, i0, ignoreCase) &&
-                    (i1 >= lineI1 || !text[i1].isLetterOrDigit())
+                    (i1 >= lineI1 || !text[i1].isLetter1())
                 ) {
                     colors?.fill(KEYWORD, i0, i1)
                     return i1
@@ -183,7 +184,7 @@ class CLikeLanguage(val type: CLikeLanguageType) : Language {
             when (state) {
                 DEFAULT -> {
                     // --- Keyword detection ---
-                    if (i == line.i0 || !isLetter(text[i - 1])) {
+                    if (i == line.i0 || !text[i - 1].isLetter1()) {
                         i = line.readKeywords(i, type.keywords[text[i]], false, i)
                         if (i == line.i1) break@loop
                     }
@@ -346,6 +347,11 @@ class CLikeLanguage(val type: CLikeLanguageType) : Language {
             CLikeLanguageType.PYTHON -> null
             else -> CLikeFormatter.format(lines, options.indentation, options.lineBreakLength)
         }
+    }
+
+    override fun getBlockStyle(): BlockStyle? {
+        return if (type == CLikeLanguageType.PYTHON) BlockStyle.INDENTATION
+        else BlockStyle.BRACKETS
     }
 
     override fun toString(): String = type.name

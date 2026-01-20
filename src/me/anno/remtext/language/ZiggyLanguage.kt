@@ -9,6 +9,7 @@ import me.anno.remtext.Colors.NUMBER
 import me.anno.remtext.Colors.STRING
 import me.anno.remtext.Colors.SYMBOL
 import me.anno.remtext.Colors.VARIABLE
+import me.anno.remtext.blocks.BlockStyle
 import me.anno.remtext.font.Line
 import me.anno.remtext.formatters.AutoFormatOptions
 import me.anno.remtext.formatters.ZiggyFormatter
@@ -117,6 +118,8 @@ object ZiggyLanguage : Language {
 
     override fun format(lines: List<Line>, options: AutoFormatOptions) =
         ZiggyFormatter.format(lines, options.indentation, options.lineBreakLength)
+
+    override fun getBlockStyle() = BlockStyle.BRACKETS
 
     override fun toString(): String = "Ziggy"
 }

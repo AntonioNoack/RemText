@@ -9,6 +9,7 @@ import me.anno.remtext.Colors.NUMBER
 import me.anno.remtext.Colors.STRING
 import me.anno.remtext.Colors.SYMBOL
 import me.anno.remtext.Colors.VARIABLE
+import me.anno.remtext.blocks.BlockStyle
 import me.anno.remtext.font.Line
 import kotlin.math.max
 
@@ -173,5 +174,6 @@ object YAMLLanguage : Language {
         return state
     }
 
+    override fun getBlockStyle() = BlockStyle.INDENTATION
     override fun toString(): String = "YAML"
 }

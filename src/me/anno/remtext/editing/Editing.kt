@@ -8,6 +8,7 @@ import me.anno.remtext.Rendering.file
 import me.anno.remtext.Window.WINDOW_TITLE
 import me.anno.remtext.Window.window
 import me.anno.remtext.Colors.DEFAULT
+import me.anno.remtext.blocks.BlockStyle.Companion.calculateDepth
 import me.anno.remtext.font.Font.lineHeight
 import me.anno.remtext.font.Line
 import org.lwjgl.glfw.GLFW.glfwSetWindowTitle
@@ -119,7 +120,8 @@ object Editing {
     }
 
     fun validateColorsInRange(i0: Int, i1: Int = i0 + 1) {
-        val hl = file.language ?: return
+        val language = file.language ?: return
+        val blockStyle = language.getBlockStyle()
         val lines = file.lines
         val prevLine = lines.getOrNull(i0 - 1)
         var state = if (prevLine != null) prevLine.colors!![prevLine.i1] else DEFAULT
@@ -127,7 +129,8 @@ object Editing {
             val line = lines.getOrNull(i) ?: return
             val lineColors = line.colors ?: continue
             lineColors.fill(DEFAULT, line.i0, line.i1 + 1)
-            state = hl.highlight(line, state)
+            state = language.highlight(line, state)
+            line.depth = blockStyle.calculateDepth(line)
         }
         // while state != lines[i].colors[i0], validate more lines
         for (i in i1 until lines.size) {
@@ -136,7 +139,8 @@ object Editing {
                 val lineColors = line.colors ?: continue
                 if (state == lineColors[line.i0]) return // should be done
                 lineColors.fill(DEFAULT, line.i0, line.i1 + 1)
-                state = hl.highlight(line, state)
+                state = language.highlight(line, state)
+                line.depth = blockStyle.calculateDepth(line)
             }
         }
     }
