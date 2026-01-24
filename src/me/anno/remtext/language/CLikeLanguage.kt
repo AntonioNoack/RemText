@@ -295,11 +295,11 @@ class CLikeLanguage(val type: CLikeLanguageType) : Language {
                 }
                 ML_STRING -> {
                     val suffix = if (type.supportsBacktickStrings) "`" else "\"\"\""
-                    continueMLUntilSuffix(suffix, ML_STRING, 0)
+                    continueMLUntilSuffix(suffix, state, 0)
                 }
                 ML_STRING2 -> {
                     // for Python only at the moment, no other language has two types of multiline strings
-                    continueMLUntilSuffix("'''", ML_STRING2, 0)
+                    continueMLUntilSuffix("'''", state, 0)
                 }
 
                 else -> i++
