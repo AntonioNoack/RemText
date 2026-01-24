@@ -1,6 +1,11 @@
 package me.anno.remtext.font
 
 import me.anno.remtext.Colors
+import me.anno.remtext.Colors.COMMENT
+import me.anno.remtext.Colors.ML_COMMENT
+import me.anno.remtext.Colors.ML_STRING
+import me.anno.remtext.Colors.ML_STRING2
+import me.anno.remtext.Colors.STRING
 import kotlin.experimental.and
 import kotlin.math.max
 import kotlin.math.min
@@ -152,14 +157,24 @@ class Line(
         if (i !in i0..<i1) return false
         val colors = colors ?: return false
         val color = colors[i] and Colors.COLOR_MASK.toByte()
-        return color == Colors.STRING || color == Colors.ML_STRING
+        return when (color) {
+            STRING,
+            ML_STRING,
+            ML_STRING2 -> true
+            else -> false
+        }
     }
 
     fun isComment(i: Int): Boolean {
         if (i !in i0..<i1) return false
         val colors = colors ?: return false
         val color = colors[i] and Colors.COLOR_MASK.toByte()
-        return color == Colors.COMMENT || color == Colors.ML_COMMENT || color == Colors.TODO
+        return when (color) {
+            COMMENT,
+            ML_COMMENT,
+            Colors.TODO -> true
+            else -> false
+        }
     }
 
     fun countIndentation(): Int {

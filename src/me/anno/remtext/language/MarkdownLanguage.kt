@@ -7,6 +7,7 @@ import me.anno.remtext.Colors.DEFAULT
 import me.anno.remtext.Colors.KEYWORD
 import me.anno.remtext.Colors.ML_COMMENT
 import me.anno.remtext.Colors.ML_STRING
+import me.anno.remtext.Colors.ML_STRING2
 import me.anno.remtext.Colors.NUMBER
 import me.anno.remtext.Colors.STRING
 import me.anno.remtext.Colors.SYMBOL
@@ -223,7 +224,7 @@ object MarkdownLanguage : Language {
         }
 
         // ML_STRING handling for unknown language fences: continue until closing ```
-        if (state == ML_STRING) {
+        if (state == ML_STRING || state == ML_STRING2) {
             val end = line.indexOf("```", line.i0, false)
             if (end >= 0) {
                 colors.fill(ML_STRING, line.i0, end + 3)

@@ -174,12 +174,25 @@ class CLikeLanguage(val type: CLikeLanguageType) : Language {
     }
 
     override fun highlight(line: Line, state0: Byte): Byte {
-        var state = if (state0 == ML_COMMENT || state0 == ML_STRING) state0 else DEFAULT
+        var state = if (state0 == ML_COMMENT || state0 == ML_STRING || state0 == ML_STRING2) state0 else DEFAULT
         val text = line.text
         val colors = line.colors ?: return state
         if (colors.isEmpty()) return state
 
         var i = line.i0
+
+        fun continueString(suffix: String, mlStringType: Byte){
+            // for Python only at the moment, no other language has two types of multiline strings
+            val end = line.indexOf(suffix, i, false)
+            if (end >= 0) {
+                colors.fill(mlStringType, i, end + suffix.length)
+                i = end + suffix.length
+                state = DEFAULT
+            } else {
+                colors.fill(mlStringType, i, line.i1)
+                i = line.i1
+            }
+        }
 
         loop@ while (i < line.i1) {
             when (state) {
@@ -327,28 +340,13 @@ class CLikeLanguage(val type: CLikeLanguageType) : Language {
                 }
                 ML_STRING -> {
                     val suffix = if (type.supportsBacktickStrings) "`" else "\"\"\""
-                    val end = line.indexOf(suffix, i, false)
-                    if (end >= 0) {
-                        colors.fill(ML_STRING, i, end + suffix.length)
-                        i = end + suffix.length
-                        state = DEFAULT
-                    } else {
-                        colors.fill(ML_STRING, i, line.i1)
-                        i = line.i1
-                    }
+                    continueString(suffix, ML_STRING)
                 }
                 ML_STRING2 -> {
                     // for Python only at the moment, no other language has two types of multiline strings
-                    val end = line.indexOf("'''", i, false)
-                    if (end >= 0) {
-                        colors.fill(ML_STRING2, i, end + 3)
-                        i = end + 3
-                        state = DEFAULT
-                    } else {
-                        colors.fill(ML_STRING, i, line.i1)
-                        i = line.i1
-                    }
+                    continueString("'''", ML_STRING2)
                 }
+
                 else -> i++
             }
         }
@@ -356,6 +354,7 @@ class CLikeLanguage(val type: CLikeLanguageType) : Language {
         colors[line.i1] = state
         return state
     }
+
 
     override fun format(lines: List<Line>, options: AutoFormatOptions): List<Line>? {
         return when (type) {
