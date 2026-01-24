@@ -112,7 +112,7 @@ enum class CLikeLanguageType {
         }.splitKeywords(false)
     }
 
-    val supportsTriangleStrings: Boolean
+    val supportsTripleBlockStrings: Boolean
         get() = this == KOTLIN || this == PYTHON || this == SWIFT || this == ZIG
 
     val supportsBacktickStrings: Boolean

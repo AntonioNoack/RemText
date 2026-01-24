@@ -14,9 +14,10 @@ object Colors {
     const val BRACKET = 6.toByte()
     const val STRING = 7.toByte()
     const val ML_STRING = 8.toByte()
-    const val TODO = 9.toByte()
-    const val VARIABLE = 10.toByte()
-    const val DOC_COMMENT = 11.toByte()
+    const val ML_STRING2 = 9.toByte()
+    const val TODO = 10.toByte()
+    const val VARIABLE = 11.toByte()
+    const val DOC_COMMENT = 12.toByte()
 
     const val COLOR_BITS = 4
     const val COLOR_MASK = (1 shl COLOR_BITS) - 1
@@ -42,6 +43,7 @@ object Colors {
             symbolColor,
             keywordColor,
             bracketColor,
+            stringColor,
             stringColor,
             stringColor,
             todoColor,
@@ -71,6 +73,7 @@ object Colors {
             symbolColor,
             keywordColor,
             bracketColor,
+            stringColor,
             stringColor,
             stringColor,
             todoColor,

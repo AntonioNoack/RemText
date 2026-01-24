@@ -8,6 +8,7 @@ import me.anno.remtext.Colors.DOC_COMMENT
 import me.anno.remtext.Colors.KEYWORD
 import me.anno.remtext.Colors.ML_COMMENT
 import me.anno.remtext.Colors.ML_STRING
+import me.anno.remtext.Colors.ML_STRING2
 import me.anno.remtext.Colors.NUMBER
 import me.anno.remtext.Colors.STRING
 import me.anno.remtext.Colors.SYMBOL
@@ -239,19 +240,22 @@ class CLikeLanguage(val type: CLikeLanguageType) : Language {
                         }
 
                         // Strings
-                        line.startsWith("\"\"\"", i) && type.supportsTriangleStrings -> {
+                        line.startsWith("\"\"\"", i) && type.supportsTripleBlockStrings -> {
                             val end = findTripleQuoteStringEnd(line, i)
-                            colors.fill(STRING, i, end)
+                            colors.fill(ML_STRING, i, end)
+                            state = if (end >= i + 3 && line.startsWith("\"\"\"\"", end - 3)) state else ML_STRING
                             i = end
                         }
                         line.startsWith("'''", i) && type == CLikeLanguageType.PYTHON -> {
                             val end = findTripleQuoteStringEnd(line, i)
-                            colors.fill(STRING, i, end)
+                            colors.fill(ML_STRING2, i, end)
+                            state = if (end >= i + 3 && line.startsWith("'''", end - 3)) state else ML_STRING2
                             i = end
                         }
                         line.startsWith("`", i) && type.supportsBacktickStrings -> {
                             val end = findBacktickStringEnd(line, i)
                             colors.fill(ML_STRING, i, end)
+                            state = if (end >= i + 1 && line.startsWith("`", end - 1)) state else ML_STRING
                             i = end
                         }
                         line.startsWith("r", i) && type == CLikeLanguageType.RUST &&
@@ -322,10 +326,23 @@ class CLikeLanguage(val type: CLikeLanguageType) : Language {
                     } else colors[i++] = ML_COMMENT
                 }
                 ML_STRING -> {
-                    val end = line.indexOf('`', i, false)
+                    val suffix = if (type.supportsBacktickStrings) "`" else "\"\"\""
+                    val end = line.indexOf(suffix, i, false)
                     if (end >= 0) {
-                        colors.fill(ML_STRING, i, end + 1)
-                        i = end + 1
+                        colors.fill(ML_STRING, i, end + suffix.length)
+                        i = end + suffix.length
+                        state = DEFAULT
+                    } else {
+                        colors.fill(ML_STRING, i, line.i1)
+                        i = line.i1
+                    }
+                }
+                ML_STRING2 -> {
+                    // for Python only at the moment, no other language has two types of multiline strings
+                    val end = line.indexOf("'''", i, false)
+                    if (end >= 0) {
+                        colors.fill(ML_STRING2, i, end + 3)
+                        i = end + 3
                         state = DEFAULT
                     } else {
                         colors.fill(ML_STRING, i, line.i1)
