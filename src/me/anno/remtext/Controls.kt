@@ -274,7 +274,7 @@ object Controls {
                     }
                     InputMode.REPLACE -> replaced.delete()
                 }
-                GLFW_KEY_ENTER -> when (inputMode) {
+                GLFW_KEY_ENTER, GLFW_KEY_KP_ENTER -> when (inputMode) {
                     InputMode.SEARCH_ONLY -> {
                         if (isShiftDown) showPrevSearchResult()
                         else showNextSearchResult()
