@@ -663,12 +663,18 @@ object Controls {
     }
 
     fun scrollTo(cursor: Cursor) {
-        val dstLineIndex = if (file.wrapLines) {
+
+        // remove all collapsed blocks, that hide our line
+        val collapsed = file.collapsedBlocks
+        collapsed.removeIf { it.isCollapsed(cursor.lineIndex) }
+
+        val numLinesToSkip = if (file.wrapLines) {
             val lines = file.lines
             var numLines = 0
             val available = Window.availableWidth
             for (lineIndex in lines.indices) {
                 val line = lines[lineIndex]
+                if (collapsed.any { it.isCollapsed(lineIndex) }) continue
                 if (lineIndex < cursor.lineIndex) {
                     numLines += line.getNumLines(available)
                 } else {
@@ -680,9 +686,12 @@ object Controls {
             }
             numLines
         } else {
-            cursor.lineIndex
+            // only count non-collapsed lines;
+            (0..cursor.lineIndex).count { lineIndex ->
+                collapsed.none { it.isCollapsed(lineIndex) }
+            }
         }
-        scrollY = dstLineIndex * lineHeight.toLong()
+        scrollY = numLinesToSkip * lineHeight.toLong()
     }
 
     fun updateSearchResults() {
