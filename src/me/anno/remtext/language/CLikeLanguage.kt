@@ -181,7 +181,7 @@ class CLikeLanguage(val type: CLikeLanguageType) : Language {
 
         var i = line.i0
 
-        fun continueString(suffix: String, mlStringType: Byte){
+        fun continueMLUntilSuffix(suffix: String, mlStringType: Byte){
             // for Python only at the moment, no other language has two types of multiline strings
             val end = line.indexOf(suffix, i, false)
             if (end >= 0) {
@@ -332,19 +332,15 @@ class CLikeLanguage(val type: CLikeLanguageType) : Language {
                     }
                 }
                 ML_COMMENT -> {
-                    if (line.startsWith("*/", i)) {
-                        colors.fill(ML_COMMENT, i, i + 2)
-                        i += 2
-                        state = DEFAULT
-                    } else colors[i++] = ML_COMMENT
+                    continueMLUntilSuffix("*/", ML_COMMENT)
                 }
                 ML_STRING -> {
                     val suffix = if (type.supportsBacktickStrings) "`" else "\"\"\""
-                    continueString(suffix, ML_STRING)
+                    continueMLUntilSuffix(suffix, ML_STRING)
                 }
                 ML_STRING2 -> {
                     // for Python only at the moment, no other language has two types of multiline strings
-                    continueString("'''", ML_STRING2)
+                    continueMLUntilSuffix("'''", ML_STRING2)
                 }
 
                 else -> i++
