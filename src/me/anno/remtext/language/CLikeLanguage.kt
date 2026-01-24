@@ -90,39 +90,6 @@ class CLikeLanguage(val type: CLikeLanguageType) : Language {
         }
 
         /**
-         * Kotlin/Swift """...""" strings
-         * */
-        private fun findTripleQuoteStringEnd(line: Line, start: Int): Int {
-            val text = line.text
-            val type = text[start]
-            var i = start + 3
-            while (i < line.i1) {
-                if (i + 2 < line.i1 &&
-                    text[i] == type &&
-                    text[i + 1] == type &&
-                    text[i + 2] == type
-                ) return i + 3
-                i++
-            }
-            return line.i1
-        }
-
-        /**
-         * JS backtick strings
-         * */
-        private fun findBacktickStringEnd(line: Line, start: Int): Int {
-            val text = line.text
-            var i = start + 1
-            while (i < line.i1) {
-                when (text[i++]) {
-                    '\\' -> i++
-                    '`' -> return i
-                }
-            }
-            return line.i1
-        }
-
-        /**
          * Rust raw strings r#"..."# or r##"..."##
          * */
         private fun findRustRawStringEnd(line: Line, start: Int): Int {
@@ -181,15 +148,16 @@ class CLikeLanguage(val type: CLikeLanguageType) : Language {
 
         var i = line.i0
 
-        fun continueMLUntilSuffix(suffix: String, mlStringType: Byte){
+        fun continueMLUntilSuffix(suffix: String, mlStringType: Byte, skip: Int) {
             // for Python only at the moment, no other language has two types of multiline strings
-            val end = line.indexOf(suffix, i, false)
+            val end = line.indexOf(suffix, i + skip, false)
             if (end >= 0) {
                 colors.fill(mlStringType, i, end + suffix.length)
-                i = end + suffix.length
                 state = DEFAULT
+                i = end + suffix.length
             } else {
                 colors.fill(mlStringType, i, line.i1)
+                state = mlStringType
                 i = line.i1
             }
         }
@@ -213,7 +181,7 @@ class CLikeLanguage(val type: CLikeLanguageType) : Language {
                             } else {
                                 colors.fill(DOC_COMMENT, i, line.i1)
                                 i = line.i1
-                                state = ML_COMMENT
+                                state = DOC_COMMENT
                             }
                         }
                         line.startsWith("/*", i) -> {
@@ -254,22 +222,13 @@ class CLikeLanguage(val type: CLikeLanguageType) : Language {
 
                         // Strings
                         line.startsWith("\"\"\"", i) && type.supportsTripleBlockStrings -> {
-                            val end = findTripleQuoteStringEnd(line, i)
-                            colors.fill(ML_STRING, i, end)
-                            state = if (end >= i + 3 && line.startsWith("\"\"\"\"", end - 3)) state else ML_STRING
-                            i = end
+                            continueMLUntilSuffix("\"\"\"", ML_STRING, 3)
                         }
                         line.startsWith("'''", i) && type == CLikeLanguageType.PYTHON -> {
-                            val end = findTripleQuoteStringEnd(line, i)
-                            colors.fill(ML_STRING2, i, end)
-                            state = if (end >= i + 3 && line.startsWith("'''", end - 3)) state else ML_STRING2
-                            i = end
+                            continueMLUntilSuffix("'''", ML_STRING2, 3)
                         }
                         line.startsWith("`", i) && type.supportsBacktickStrings -> {
-                            val end = findBacktickStringEnd(line, i)
-                            colors.fill(ML_STRING, i, end)
-                            state = if (end >= i + 1 && line.startsWith("`", end - 1)) state else ML_STRING
-                            i = end
+                            continueMLUntilSuffix("`", ML_STRING2, 1)
                         }
                         line.startsWith("r", i) && type == CLikeLanguageType.RUST &&
                                 i + 1 < line.i1 && text[i + 1] == '"' -> {
@@ -331,16 +290,16 @@ class CLikeLanguage(val type: CLikeLanguageType) : Language {
                         }
                     }
                 }
-                ML_COMMENT -> {
-                    continueMLUntilSuffix("*/", ML_COMMENT)
+                ML_COMMENT, DOC_COMMENT -> {
+                    continueMLUntilSuffix("*/", state, 0)
                 }
                 ML_STRING -> {
                     val suffix = if (type.supportsBacktickStrings) "`" else "\"\"\""
-                    continueMLUntilSuffix(suffix, ML_STRING)
+                    continueMLUntilSuffix(suffix, ML_STRING, 0)
                 }
                 ML_STRING2 -> {
                     // for Python only at the moment, no other language has two types of multiline strings
-                    continueMLUntilSuffix("'''", ML_STRING2)
+                    continueMLUntilSuffix("'''", ML_STRING2, 0)
                 }
 
                 else -> i++
