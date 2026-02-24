@@ -76,6 +76,7 @@ object Font {
     }
 
     private fun createTexture(char: Char): Texture {
+        if (char == '\t') return createTexture('⇥')
 
         val width = getOffset(char, ' ') + 1
 
@@ -103,7 +104,8 @@ object Font {
 
     private fun calculateOffset(charA: Char, charB: Char): Int {
         if (charA == ' ') return spaceWidth
-        if (charB == ' ') return max(len(charArrayOf(charA)).toInt(), 1)
+        if (charA == '\t') return spaceWidth * 4
+        if (charB.isWhitespace()) return max(len(charArrayOf(charA)).toInt(), 1)
 
         val lenAB = len(charArrayOf(charA, charB))
         val lenB = len(charArrayOf(charB))
