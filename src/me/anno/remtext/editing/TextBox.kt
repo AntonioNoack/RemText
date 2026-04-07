@@ -46,6 +46,12 @@ class TextBox {
         paste("", minCursor, maxCursor)
     }
 
+    fun override(selectedText: String) {
+        text = selectedText
+        cursor0 = 0
+        cursor1 = text.length
+    }
+
     fun cursorLeft() {
         cursor1 = max(cursor1 - 1, 0)
         if (!isShiftDown) cursor0 = cursor1

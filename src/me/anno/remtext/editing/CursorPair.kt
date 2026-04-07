@@ -31,5 +31,7 @@ data class CursorPair(val first: Cursor, val second: Cursor) {
                 first.relI >= lineLength
     }
 
+    fun isNotEmpty(): Boolean = first != second
+
     constructor() : this(Cursor.ZERO, Cursor.ZERO)
 }

@@ -21,6 +21,7 @@ import me.anno.remtext.editing.Editing.cursorUp
 import me.anno.remtext.editing.Editing.findLineAt
 import me.anno.remtext.editing.Editing.getCursorPosition
 import me.anno.remtext.editing.Editing.getFullString
+import me.anno.remtext.editing.Editing.getSelectedString
 import me.anno.remtext.editing.Editing.getSelectedStrings
 import me.anno.remtext.editing.Editing.highLevelDeleteSelection
 import me.anno.remtext.editing.Editing.highLevelPaste
@@ -208,6 +209,11 @@ object Controls {
                             }
                         } else {
                             inputMode = InputMode.SEARCH_ONLY
+                            val selectedText = getSelectedString()
+                            if (selectedText.isNotEmpty()) {
+                                searched.override(selectedText)
+                                updateSearchResults()
+                            }
                         }
                     }
                 }
@@ -216,6 +222,12 @@ object Controls {
                         inputMode =
                             if (inputMode != InputMode.SEARCH) InputMode.SEARCH
                             else InputMode.REPLACE
+
+                        val selectedText = getSelectedString()
+                        if (selectedText.isNotEmpty()) {
+                            replaced.override(selectedText)
+                            updateSearchResults()
+                        }
                     }
                 }
                 GLFW_KEY_TAB -> {

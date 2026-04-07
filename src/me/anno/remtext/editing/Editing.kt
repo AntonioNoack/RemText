@@ -1,5 +1,6 @@
 package me.anno.remtext.editing
 
+import me.anno.remtext.Colors.DEFAULT
 import me.anno.remtext.Controls.isControlDown
 import me.anno.remtext.Rendering
 import me.anno.remtext.Rendering.countedLinesW
@@ -7,7 +8,6 @@ import me.anno.remtext.Rendering.cursors
 import me.anno.remtext.Rendering.file
 import me.anno.remtext.Window.WINDOW_TITLE
 import me.anno.remtext.Window.window
-import me.anno.remtext.Colors.DEFAULT
 import me.anno.remtext.blocks.BlockStyle.Companion.calculateDepth
 import me.anno.remtext.font.Font.lineHeight
 import me.anno.remtext.font.Line
@@ -216,6 +216,11 @@ object Editing {
         val y = lineStart.y + dy * lineHeight
         // find the closest thing at x
         return getCursorPosition(x, y)
+    }
+
+    fun getSelectedString(): String {
+        val cursor = cursors.firstOrNull { it.isNotEmpty() } ?: return ""
+        return getStringFromRange(cursor.min, cursor.max)
     }
 
     fun getSelectedStrings(): List<String> {
