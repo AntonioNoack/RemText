@@ -34,6 +34,8 @@ object Font {
         private set
     var spacingWidth: Int = 6
         private set
+    val emojiWidth: Int
+        get() = max((lineHeight * 4) / 5, 1)
 
     init {
         calculateBaseSizes()

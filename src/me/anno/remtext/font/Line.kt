@@ -20,22 +20,44 @@ class Line(
         fun fillOffsets(text: String, i0: Int, i1: Int, offsets: IntArray) {
             if (i0 >= offsets.size) return
             var x = offsets[i0]
-            for (i in i0 + 1..i1) {
-                val curr = text[i - 1]
-                val next = if (i < i1) text[i] else ' '
-                x += Font.getOffset(curr, next)
-                offsets[i] = x
+            var i = i0
+            while (i < i1) {
+                val match = Emojis.findMatch(text, i, i1)
+                if (match != null) {
+                    x += Font.emojiWidth
+                    for (j in 1..match.length) {
+                        offsets[i + j] = x
+                    }
+                    i += match.length
+                } else {
+                    val next = if (i + 1 < i1) text[i + 1] else ' '
+                    x += Font.getOffset(text[i], next)
+                    offsets[i + 1] = x
+                    i++
+                }
             }
         }
 
         fun validateOffsets(text: String, i0: Int, i1: Int, offsets: IntArray) {
             if (i0 >= offsets.size) return
             var x = offsets[i0]
-            for (i in i0 + 1..i1) {
-                val curr = text[i - 1]
-                val next = if (i < i1) text[i] else ' '
-                x += Font.getOffset(curr, next)
-                if (offsets[i] != x) throw IllegalArgumentException("Mismatch! $i:$x vs ${offsets[i]}")
+            var i = i0
+            while (i < i1) {
+                val match = Emojis.findMatch(text, i, i1)
+                if (match != null) {
+                    x += Font.emojiWidth
+                    for (j in 1..match.length) {
+                        val k = i + j
+                        if (offsets[k] != x) throw IllegalArgumentException("Mismatch! $k:$x vs ${offsets[k]}")
+                    }
+                    i += match.length
+                } else {
+                    val next = if (i + 1 < i1) text[i + 1] else ' '
+                    x += Font.getOffset(text[i], next)
+                    val k = i + 1
+                    if (offsets[k] != x) throw IllegalArgumentException("Mismatch! $k:$x vs ${offsets[k]}")
+                    i++
+                }
             }
         }
 
@@ -74,21 +96,8 @@ class Line(
         if (k1 !in k0..other.i1) throw IllegalArgumentException()
 
         val joinedText = text.substring(j0, j1) + middle + other.text.substring(k0, k1)
-        val joinedOffset = copyOfRange(offsets, j0, j1 + 1, joinedText.length + 1)
-        val sizeJ = j1 - j0
-        val sizeJM = sizeJ + middle.length
-        // -1 and +1 are overlaps to correct the transitions from characters to their next
-        val fillI0 = max(sizeJ - 1, j0 - i0)
-        val fillI1 = min(sizeJM + 1, joinedText.length)
-        fillOffsets(joinedText, fillI0, fillI1, joinedOffset)
-
-        // println("j0,j1: $j0,$j1, k0,k1: $k0,$k1, sizeJ: $sizeJ, sizeJM: $sizeJM, joined: ${joinedText.length}")
-        // println("Join ranges ${j1 - j0} + ${middle.length} + ${k1 - k0}, fill: $fillI0-$fillI1")
-
-        val delta = joinedOffset[sizeJM] - other.offsets[k0]
-        for (i in 0..k1 - k0) {
-            joinedOffset[i + sizeJM] = other.offsets[k0 + i] + delta
-        }
+        val joinedOffset = IntArray(joinedText.length + 1)
+        fillOffsets(joinedText, 0, joinedText.length, joinedOffset)
         validateOffsets(joinedText, 0, joinedText.length, joinedOffset)
         return Line(
             joinedText, 0, joinedText.length, joinedOffset,

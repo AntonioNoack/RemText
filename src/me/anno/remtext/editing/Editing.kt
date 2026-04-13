@@ -9,6 +9,7 @@ import me.anno.remtext.Rendering.file
 import me.anno.remtext.Window.WINDOW_TITLE
 import me.anno.remtext.Window.window
 import me.anno.remtext.blocks.BlockStyle.Companion.calculateDepth
+import me.anno.remtext.font.Emojis
 import me.anno.remtext.font.Font.lineHeight
 import me.anno.remtext.font.Line
 import org.lwjgl.glfw.GLFW.glfwSetWindowTitle
@@ -154,7 +155,7 @@ object Editing {
         val line = lines[cursor.lineIndex]
         return if (cursor.relI > 0) {
             // all is fine
-            var newI = cursor.relI - 1
+            var newI = Emojis.findPreviousStart(line.text, line.i0 + cursor.relI, line.i0) - line.i0
             if (isControlDown) {
                 while (newI > 0 && !isWord(line.text[line.i0 + newI])) newI--
                 while (newI > 0 && isWord(line.text[line.i0 + newI])) newI--
@@ -173,7 +174,9 @@ object Editing {
         val lineLength = line.length
         return if (cursor.relI < lineLength) {
             // all is fine
-            var newI = cursor.relI + 1
+            val absI = line.i0 + cursor.relI
+            val match = Emojis.findMatch(line.text, absI, line.i1)
+            var newI = cursor.relI + (match?.length ?: 1)
             if (isControlDown) {
                 while (newI < lineLength && !isWord(line.text[line.i0 + newI])) newI++
                 while (newI < lineLength && isWord(line.text[line.i0 + newI])) newI++
@@ -277,6 +280,7 @@ object Editing {
         for (i in line.i0 + lineStart.relI until line.i1) {
             val x0 = line.getOffset(i)
             val x1 = line.getOffset(i + 1)
+            if (x0 == x1) continue
             if (x0 + x1 >= searched) {
                 return Cursor(lineStart.lineIndex, i - line.i0)
             }

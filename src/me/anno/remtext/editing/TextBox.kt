@@ -1,6 +1,7 @@
 package me.anno.remtext.editing
 
 import me.anno.remtext.Controls.isShiftDown
+import me.anno.remtext.font.Emojis
 import me.anno.remtext.font.Font
 import kotlin.math.max
 import kotlin.math.min
@@ -35,14 +36,20 @@ class TextBox {
     }
 
     fun backspace() {
-        val minCursor = max(min(cursor0, cursor1) - 1, 0)
+        val minCursor0 = min(cursor0, cursor1)
+        val minCursor = if (cursor0 == cursor1) {
+            max(Emojis.findPreviousStart(text, minCursor0, 0), 0)
+        } else minCursor0
         val maxCursor = max(cursor0, cursor1)
         paste("", minCursor, maxCursor)
     }
 
     fun delete() {
         val minCursor = min(cursor0, cursor1)
-        val maxCursor = min(max(cursor0, cursor1) + 1, text.length)
+        val maxCursor = if (cursor0 == cursor1) {
+            val match = Emojis.findMatch(text, minCursor, text.length)
+            min(minCursor + (match?.length ?: 1), text.length)
+        } else max(cursor0, cursor1)
         paste("", minCursor, maxCursor)
     }
 
@@ -53,28 +60,34 @@ class TextBox {
     }
 
     fun cursorLeft() {
-        cursor1 = max(cursor1 - 1, 0)
+        cursor1 = max(Emojis.findPreviousStart(text, cursor1, 0), 0)
         if (!isShiftDown) cursor0 = cursor1
     }
 
     fun cursorRight() {
-        cursor1 = min(cursor1 + 1, text.length)
+        val match = Emojis.findMatch(text, cursor1, text.length)
+        cursor1 = min(cursor1 + (match?.length ?: 1), text.length)
         if (!isShiftDown) cursor0 = cursor1
     }
 
     fun setCursorByX(mouseX: Int) {
         var x = 0
         val text = text
-        for (i in text.indices) {
+        var i = 0
+        while (i < text.length) {
             val char = text[i]
-            val nextChar = if (i + 1 < text.length) text[i + 1] else ' '
-            val offset = Font.getOffset(char, nextChar)
+            val match = Emojis.findMatch(text, i, text.length)
+            val offset = if (match != null) Font.emojiWidth else {
+                val nextChar = if (i + 1 < text.length) text[i + 1] else ' '
+                Font.getOffset(char, nextChar)
+            }
             if (x + offset.shr(1) > mouseX) {
                 // found it :)
                 cursor1 = i
                 return
             }
             x += offset
+            i += match?.length ?: 1
         }
         cursor1 = text.length
     }

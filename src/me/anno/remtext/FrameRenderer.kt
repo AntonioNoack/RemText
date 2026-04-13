@@ -38,6 +38,7 @@ import me.anno.remtext.blocks.BlockStyle.Companion.canCollapseBlock
 import me.anno.remtext.editing.InputMode
 import me.anno.remtext.editing.LineStart
 import me.anno.remtext.editing.TextBox
+import me.anno.remtext.font.Emojis
 import me.anno.remtext.font.Font
 import me.anno.remtext.font.Font.lineHeight
 import me.anno.remtext.font.Line
@@ -286,13 +287,25 @@ class FrameRenderer(
         texShader.use()
         color3(texShader.textColor, if (isEmpty) middle else textColor)
         color3(texShader.bgColor, bgColor)
+        setFullUV()
         var x = 0
         val text = textBox.text.ifEmpty { ifEmpty }
         val cursor0 = if (isEmpty) ifEmpty.length else textBox.cursor0
         val cursor1 = if (isEmpty) ifEmpty.length else textBox.cursor1
-        for (i in text.indices) {
+        var i = 0
+        while (i < text.length) {
             val char = text[i]
-            if (char != ' ') {
+            val emojiMatch = Emojis.findMatch(text, i, text.length)
+            if (emojiMatch != null) {
+                val emojiSize = Font.emojiWidth
+                val emojiY = y + (lineHeight - emojiSize) / 2
+                glBindTexture(GL_TEXTURE_2D, Emojis.texture.value.pointer)
+                setRawTextureMode()
+                setEmojiUV(emojiMatch.emojiIndex)
+                drawQuad(texShader.bounds, x, emojiY, emojiSize, emojiSize)
+                setFullUV()
+                setTintedTextMode()
+            } else if (char != ' ') {
                 val tex = Font.getTexture(char)
                 glBindTexture(GL_TEXTURE_2D, tex.pointer)
                 drawQuad(texShader.bounds, x, y, tex.width, tex.height)
@@ -300,12 +313,18 @@ class FrameRenderer(
             if (if (i == cursor1) showCursor0 else i == cursor0) {
                 drawCursor(x, y)
             }
-            val nextChar = if (i + 1 < text.length) text[i + 1] else ' '
-            x += Font.getOffset(char, nextChar)
+            if (emojiMatch != null) {
+                x += Font.emojiWidth
+                i += emojiMatch.length
+            } else {
+                val nextChar = if (i + 1 < text.length) text[i + 1] else ' '
+                x += Font.getOffset(char, nextChar)
+                i++
+            }
         }
 
-        val i = text.length
-        if (if (i == cursor1) showCursor0 else i == cursor0) {
+        val endI = text.length
+        if (if (endI == cursor1) showCursor0 else endI == cursor0) {
             drawCursor(x, y)
         }
     }
@@ -314,10 +333,27 @@ class FrameRenderer(
         texShader.use()
         color3(texShader.textColor, textColor)
         color3(texShader.bgColor, bgColor)
+        setFullUV()
         var x = x
         val y = 0
-        for (i in text.indices.reversed()) {
+        var i = text.lastIndex
+        while (i >= 0) {
             val char = text[i]
+            val emojiStart = Emojis.findPreviousStart(text, i + 1, 0)
+            val emojiMatch = if (emojiStart >= 0) Emojis.findMatch(text, emojiStart, i + 1) else null
+            if (emojiMatch != null) {
+                val emojiSize = Font.emojiWidth
+                val emojiY = y + (lineHeight - emojiSize) / 2
+                x -= emojiSize
+                glBindTexture(GL_TEXTURE_2D, Emojis.texture.value.pointer)
+                setRawTextureMode()
+                setEmojiUV(emojiMatch.emojiIndex)
+                drawQuad(texShader.bounds, x, emojiY, emojiSize, emojiSize)
+                setFullUV()
+                setTintedTextMode()
+                i = emojiStart - 1
+                continue
+            }
             val nextChar = if (i + 1 < text.length) text[i + 1] else ' '
             x -= Font.getOffset(char, nextChar)
             if (char != ' ') {
@@ -325,6 +361,7 @@ class FrameRenderer(
                 glBindTexture(GL_TEXTURE_2D, tex.pointer)
                 drawQuad(texShader.bounds, x, y, tex.width, tex.height)
             }
+            i--
         }
     }
 
@@ -418,6 +455,31 @@ class FrameRenderer(
         texShader.use()
         color3(texShader.textColor, textColor)
         color3(texShader.bgColor, bgColor)
+        setFullUV()
+        setTintedTextMode()
+    }
+
+    private fun setFullUV() {
+        glUniform4f(texShader.uvBounds, 0f, 0f, 1f, 1f)
+    }
+
+    private fun setTintedTextMode() {
+        glUniform1f(texShader.useRawTextureColor, 0f)
+    }
+
+    private fun setRawTextureMode() {
+        glUniform1f(texShader.useRawTextureColor, 1f)
+    }
+
+    private fun setEmojiUV(emojiIndex: Int) {
+        val tileSize = Emojis.tileSize()
+        val atlasWidth = Emojis.images.width.toFloat()
+        val atlasHeight = Emojis.images.height.toFloat()
+        val x0 = Emojis.tileX(emojiIndex) / atlasWidth
+        val y0 = Emojis.tileY(emojiIndex) / atlasHeight
+        val x1 = (Emojis.tileX(emojiIndex) + tileSize) / atlasWidth
+        val y1 = (Emojis.tileY(emojiIndex) + tileSize) / atlasHeight
+        glUniform4f(texShader.uvBounds, x0, y0, x1 - x0, y1 - y0)
     }
 
     private fun prepareState(lineNumberOffset: Int) {
@@ -489,12 +551,30 @@ class FrameRenderer(
 
         nextSearchIndex = findNextSearchIndex(lineIndex, i0)
 
-        line@ for (i in i0 until line.i1) {
+        var i = i0
+        line@ while (i < line.i1) {
             val curr = text[i]
             val x = line.getOffset(i) + dxi
             if (x >= width) break@line
+            val emojiMatch = Emojis.findMatch(text, i, line.i1)
+            if (emojiMatch != null) {
+                val emojiSize = Font.emojiWidth
+                val emojiY = y + (lineHeight - emojiSize) / 2
+                if (x + emojiSize > 0) {
+                    onChar(line, lineIndex, i, x, emojiSize)
+                    glBindTexture(GL_TEXTURE_2D, Emojis.texture.value.pointer)
+                    setRawTextureMode()
+                    setEmojiUV(emojiMatch.emojiIndex)
+                    drawQuad(texShader.bounds, x, emojiY, emojiSize, emojiSize)
+                    setFullUV()
+                    setTintedTextMode()
+                }
+                i += emojiMatch.length
+                continue
+            }
             if (curr == ' ') {
                 onChar(line, lineIndex, i, x, Font.spaceWidth)
+                i++
                 continue
             }
 
@@ -504,6 +584,7 @@ class FrameRenderer(
                 glBindTexture(GL_TEXTURE_2D, tex.pointer)
                 drawQuad(texShader.bounds, x, y, tex.width, tex.height)
             }
+            i++
         }
 
         if (y + lineHeight >= minY0 && y < height &&
@@ -526,15 +607,18 @@ class FrameRenderer(
 
         // draw text
         var dxi = 0
-        line@ for (i in line.i0 until line.i1) {
+        var i = line.i0
+        line@ while (i < line.i1) {
             val curr = text[i]
             val x = line.getOffset(i) + lineNumberOffset
+            val emojiMatch = Emojis.findMatch(text, i, line.i1)
+            val texWidth = if (emojiMatch != null) Font.emojiWidth else line.getWidth(i)
             if (curr == ' ') {
                 onChar(line, lineIndex, i, x - dxi, Font.spaceWidth)
+                i++
                 continue
             }
 
-            val texWidth = line.getWidth(i)
             if (x > dxi && x - dxi + texWidth > width) {
                 dxi = x - lineNumberOffset
                 y += lineHeight
@@ -546,12 +630,30 @@ class FrameRenderer(
             }
 
             if (isVisible) {
-                val tex = Font.getTexture(curr)
-                if (y + tex.height >= minY0) {
-                    onChar(line, lineIndex, i, x - dxi, tex.width)
-                    glBindTexture(GL_TEXTURE_2D, tex.pointer)
-                    drawQuad(texShader.bounds, x - dxi, y, tex.width, tex.height)
+                if (emojiMatch != null) {
+                    val emojiSize = texWidth
+                    val emojiY = y + (lineHeight - emojiSize) / 2
+                    if (y + emojiSize >= minY0) {
+                        onChar(line, lineIndex, i, x - dxi, emojiSize)
+                        glBindTexture(GL_TEXTURE_2D, Emojis.texture.value.pointer)
+                        setRawTextureMode()
+                        setEmojiUV(emojiMatch.emojiIndex)
+                        drawQuad(texShader.bounds, x - dxi, emojiY, emojiSize, emojiSize)
+                        setFullUV()
+                        setTintedTextMode()
+                    }
+                    i += emojiMatch.length
+                } else {
+                    val tex = Font.getTexture(curr)
+                    if (y + tex.height >= minY0) {
+                        onChar(line, lineIndex, i, x - dxi, tex.width)
+                        glBindTexture(GL_TEXTURE_2D, tex.pointer)
+                        drawQuad(texShader.bounds, x - dxi, y, tex.width, tex.height)
+                    }
+                    i++
                 }
+            } else {
+                i += emojiMatch?.length ?: 1
             }
         }
 
