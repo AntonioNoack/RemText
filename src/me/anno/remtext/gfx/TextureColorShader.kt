@@ -26,7 +26,7 @@ class TextureColorShader : Shader(
             vec4 tex = texture2D(tex1, uv);
             if (useRawTextureColor > 0.5) {
                 if (tex.a < 0.001) discard;
-                FragColor = tex;
+                FragColor = vec4(mix(bgColor, tex.rgb, tex.a), 1.0);
             } else {
                 vec3 base = tex.rgb;
                 if (base.g < 0.001) discard;

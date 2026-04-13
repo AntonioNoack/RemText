@@ -71,7 +71,7 @@ object Emojis {
     fun tileSize() = TILE_SIZE
 
     val texture = lazy {
-        Texture(images)
+        Texture(images, true)
     }
 
 }

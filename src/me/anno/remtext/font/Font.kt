@@ -97,7 +97,7 @@ object Font {
         // todo if image is blank, add char code as hex inside
         //  0xffff -> ff|ff
 
-        return Texture(PixelData(image))
+        return Texture(PixelData(image), false)
     }
 
     private fun len(chars: CharArray): Double {
