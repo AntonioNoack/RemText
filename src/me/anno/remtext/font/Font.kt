@@ -4,22 +4,29 @@ import me.anno.remtext.Rendering
 import me.anno.remtext.gfx.PixelData
 import me.anno.remtext.gfx.Texture
 import org.lwjgl.opengl.GL11C.glDeleteTextures
-import java.awt.Color
+import java.awt.*
 import java.awt.Font
-import java.awt.Graphics2D
-import java.awt.RenderingHints
 import java.awt.font.FontRenderContext
 import java.awt.font.TextLayout
 import java.awt.image.BufferedImage
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.math.sqrt
 
 object Font {
 
     private const val ASCII0 = 32
     private const val NUM_ASCIIS = 128 - ASCII0
 
-    private var awtFont = Font("Verdana", 0, 15)
+    private var awtFont: Font
+
+    init {
+        val size0 = Toolkit.getDefaultToolkit().screenSize.height / 1080f
+        var fontSize = (sqrt(size0) * 15f).toInt()
+        fontSize = min(max(fontSize, 15), 60)
+        awtFont = Font("Verdana", 0, fontSize)
+    }
+
     private val renderContext = FontRenderContext(null, true, true)
 
     private val textures = arrayOfNulls<Texture>(65535)
