@@ -5,7 +5,7 @@ import me.anno.remtext.language.CLikeLanguage.Companion.splitKeywords
 enum class CLikeLanguageType {
     C, CPP, C_OR_CPP, JAVA, CSHARP, GLSL, HLSL, GO,
     JAVASCRIPT, JSON, KOTLIN, PYTHON, RUST,  SWIFT, ZIG,
-    PHP;
+    PHP, ZAUBER;
 
     val keywords by lazy {
         when (this) {
@@ -74,6 +74,12 @@ enum class CLikeLanguageType {
                     "out,override,package,private,protected,public,reified,return,sealed,set,super,suspend,this," +
                     "throw,true,try,typealias,val,var,vararg,when,where,while,yield"
 
+            ZAUBER -> "abstract,actual,annotation,as,break,by,catch,class,companion,const,constructor,continue," +
+                    "crossinline,data,do,dynamic,else,enum,expect,external,false,final,finally,for,fun,get,if,import," +
+                    "in,infix,init,inline,inner,interface,internal,is,it,lateinit,noinline,null,object,open,operator," +
+                    "out,override,package,private,protected,public,reified,return,sealed,set,super,suspend,this," +
+                    "throw,true,try,typealias,val,var,vararg,when,where,while,yield,async,defer,errdefer"
+
             PHP -> "__halt_compiler(,abstract,and,array(,as," +
                     "break,callable,case,catch,class," +
                     "clone,const,continue,declare,default," +
@@ -113,7 +119,7 @@ enum class CLikeLanguageType {
     }
 
     val supportsTripleBlockStrings: Boolean
-        get() = this == KOTLIN || this == PYTHON || this == SWIFT || this == ZIG
+        get() = this == KOTLIN || this == ZAUBER || this == PYTHON || this == SWIFT || this == ZIG
 
     val supportsBacktickStrings: Boolean
         get() = this == JAVASCRIPT
