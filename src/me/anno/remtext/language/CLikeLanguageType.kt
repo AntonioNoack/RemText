@@ -4,10 +4,23 @@ import me.anno.remtext.language.CLikeLanguage.Companion.splitKeywords
 
 enum class CLikeLanguageType {
     C, CPP, C_OR_CPP, JAVA, CSHARP, GLSL, HLSL, GO,
-    JAVASCRIPT, JSON, KOTLIN, PYTHON, RUST,  SWIFT, ZIG,
+    JAVASCRIPT, TYPESCRIPT, JSON, KOTLIN, PYTHON, RUST, SWIFT, ZIG,
     PHP, ZAUBER;
 
-    val keywords by lazy {
+    companion object {
+        val jsKeywords = "abstract,arguments,async,await,boolean,break,byte,case,catch,char,class,const," +
+                "continue,debugger,default,delete,do,double,else,enum,eval,export,extends,false,final," +
+                "finally,float,for,function,goto,if,implements,import,in,instanceof,int,interface,let," +
+                "long,native,new,null,package,private,protected,public,return,short,static,super,switch," +
+                "synchronized,this,throw,throws,transient,true,try,typeof,using,var,void,volatile,while,with,yield"
+        val ktKeywords = "abstract,actual,annotation,as,break,by,catch,class,companion,const,constructor,continue," +
+                "crossinline,data,do,dynamic,else,enum,expect,external,false,final,finally,for,fun,get,if,import," +
+                "in,infix,init,inline,inner,interface,internal,is,it,lateinit,noinline,null,object,open,operator," +
+                "out,override,package,private,protected,public,reified,return,sealed,set,super,suspend,this," +
+                "throw,true,try,typealias,val,var,vararg,when,where,while,yield"
+    }
+
+    val keywords: KeywordMap by lazy {
         when (this) {
             C -> "auto,break,case,char,const,continue,default,do,double,else,enum,extern,float,for,goto,if," +
                     "int,long,register,return,short,signed,sizeof,static,struct,switch,typedef,union,unsigned," +
@@ -60,25 +73,17 @@ enum class CLikeLanguageType {
             GO -> "break,case,chan,const,continue,default,defer,else,fallthrough,for,func,go,goto,if,import," +
                     "interface,map,package,range,return,select,struct,switch,type,var"
 
-            JAVASCRIPT -> "abstract,arguments,async,await,boolean,break,byte,case,catch,char,class,const," +
-                    "continue,debugger,default,delete,do,double,else,enum,eval,export,extends,false,final," +
-                    "finally,float,for,function,goto,if,implements,import,in,instanceof,int,interface,let," +
-                    "long,native,new,null,package,private,protected,public,return,short,static,super,switch," +
-                    "synchronized,this,throw,throws,transient,true,try,typeof,using,var,void,volatile,while,with,yield"
+            JAVASCRIPT -> jsKeywords
+
+            TYPESCRIPT -> "$jsKeywords," +
+                    "as,any,unknown,never,number,string,boolean,symbol,bigint,type,from,of,readonly," +
+                    "keyof,infer,is,asserts,namespace,abstract,override,satisfies,declare"
 
             JSON -> "null,true,false"
 
-            KOTLIN -> "abstract,actual,annotation,as,break,by,catch,class,companion,const,constructor,continue," +
-                    "crossinline,data,do,dynamic,else,enum,expect,external,false,final,finally,for,fun,get,if,import," +
-                    "in,infix,init,inline,inner,interface,internal,is,it,lateinit,noinline,null,object,open,operator," +
-                    "out,override,package,private,protected,public,reified,return,sealed,set,super,suspend,this," +
-                    "throw,true,try,typealias,val,var,vararg,when,where,while,yield"
+            KOTLIN -> ktKeywords
 
-            ZAUBER -> "abstract,actual,annotation,as,break,by,catch,class,companion,const,constructor,continue," +
-                    "crossinline,data,do,dynamic,else,enum,expect,external,false,final,finally,for,fun,get,if,import," +
-                    "in,infix,init,inline,inner,interface,internal,is,it,lateinit,noinline,null,object,open,operator," +
-                    "out,override,package,private,protected,public,reified,return,sealed,set,super,suspend,this," +
-                    "throw,true,try,typealias,val,var,vararg,when,where,while,yield,async,defer,errdefer"
+            ZAUBER -> "$ktKeywords,async,defer,errdefer"
 
             PHP -> "__halt_compiler(,abstract,and,array(,as," +
                     "break,callable,case,catch,class," +
@@ -122,7 +127,7 @@ enum class CLikeLanguageType {
         get() = this == KOTLIN || this == ZAUBER || this == PYTHON || this == SWIFT || this == ZIG
 
     val supportsBacktickStrings: Boolean
-        get() = this == JAVASCRIPT
+        get() = this == JAVASCRIPT || this == TYPESCRIPT
 
     val supportsDoubleSlashComment: Boolean
         get() = this != PYTHON

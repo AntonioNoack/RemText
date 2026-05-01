@@ -12,6 +12,7 @@ object Languages {
         highlighters["go"] = CLikeLanguage(CLikeLanguageType.GO)
         highlighters["java"] = CLikeLanguage(CLikeLanguageType.JAVA)
         highlighters["js"] = CLikeLanguage(CLikeLanguageType.JAVASCRIPT)
+        highlighters["ts"] = CLikeLanguage(CLikeLanguageType.TYPESCRIPT)
         highlighters["json"] = CLikeLanguage(CLikeLanguageType.JSON)
         highlighters["kt"] = CLikeLanguage(CLikeLanguageType.KOTLIN)
         highlighters["zbr"] = CLikeLanguage(CLikeLanguageType.ZAUBER)
@@ -34,6 +35,7 @@ object Languages {
         highlighters["rpy"] = RenPyLanguage
         alias("yml", "yaml")
         alias("js", "javascript")
+        alias("ts", "typescript")
         alias("kt", "kotlin")
         alias("zbr", "zauber")
         alias("sh", "hash")

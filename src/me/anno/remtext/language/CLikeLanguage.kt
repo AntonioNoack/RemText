@@ -141,7 +141,7 @@ class CLikeLanguage(val type: CLikeLanguageType) : Language {
     }
 
     override fun highlight(line: Line, state0: Byte): Byte {
-        var state = if (state0 == ML_COMMENT || state0 == ML_STRING || state0 == ML_STRING2) state0 else DEFAULT
+        var state = if (state0 == ML_COMMENT || state0 == DOC_COMMENT || state0 == ML_STRING || state0 == ML_STRING2) state0 else DEFAULT
         val text = line.text
         val colors = line.colors ?: return state
         if (colors.isEmpty()) return state
