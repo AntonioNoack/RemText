@@ -116,9 +116,8 @@ object Controls {
                     if (isDarkTheme) lightThemeFile.delete()
                     else lightThemeFile.createNewFile()
                 }
-                GLFW_KEY_F2 -> if (pressed) {
-                    file.wrapLines = !file.wrapLines
-                }
+                GLFW_KEY_F2 -> if (pressed) file.wrapLines = !file.wrapLines
+                GLFW_KEY_F5 -> if (pressed) file.reload()
                 GLFW_KEY_PAGE_UP -> Font.inc()
                 GLFW_KEY_PAGE_DOWN -> Font.dec()
                 GLFW_KEY_ESCAPE -> when (inputMode) {
