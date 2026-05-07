@@ -24,6 +24,7 @@ object Languages {
         highlighters["glsl"] = CLikeLanguage(CLikeLanguageType.GLSL)
         highlighters["xml"] = XMLLanguage(false)
         highlighters["html"] = XMLLanguage(true)
+        highlighters["ll"] = LLVMLanguage
         highlighters["sh"] = ShellLanguage
         highlighters["bat"] = BatchLanguage
         highlighters["css"] = CSSLanguage
